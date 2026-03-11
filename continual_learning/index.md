@@ -1,4 +1,7 @@
 # Index
 
 - [energy_based_models_for_continual_learning.md](energy_based_models_for_continual_learning.md)
+- [continual_learning_in_practice.md](continual_learning_in_practice.md)
 - [meta_learning_representations_for_continual_learning.md](meta_learning_representations_for_continual_learning.md)
+- [routing_networks_with_co_training_for_continual_learning.md](routing_networks_with_co_training_for_continual_learning.md)
+- [stacknet_stacking_parameters_for_continual_learning.md](stacknet_stacking_parameters_for_continual_learning.md)
