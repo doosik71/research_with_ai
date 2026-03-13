@@ -43,7 +43,16 @@
 - **멀티에이전트 시스템**: 협업 및 경쟁 환경에서 다중 에이전트 학습.
 - **모델 기반 RL**: 환경 모델을 학습해 샘플 효율성을 향상.
 
-## 6. 생성 모델
+## 6. 멀티에이전트 시스템
+
+- 관련 문서: [multi_agent_system](multi_agent_system/index.md)
+
+- **협력적 다중 에이전트 학습**: 공통 목표를 위해 에이전트들이 정책과 역할을 조율.
+- **경쟁 및 혼합 환경**: 게임 이론, self-play, population-based training을 활용한 전략 학습.
+- **에이전트 오케스트레이션**: LLM Agent, tool use, planning, memory를 결합한 시스템 설계.
+- **통신과 조정 메커니즘**: 메시지 패싱, shared memory, graph-based coordination 구조 연구.
+
+## 7. 생성 모델
 
 - 관련 문서: [generative_models](generative_models/index.md)
 
@@ -53,7 +62,7 @@
   (DDPM) 및 Stable Diffusion.
 - **텍스트 생성**: Transformer 기반 언어 모델을 이용한 고품질 텍스트 생성.
 
-## 7. 의료 및 바이오 분야 적용
+## 8. 의료 및 바이오 분야 적용
 
 - 관련 문서: [medical_bio](medical_bio/index.md)
 
@@ -61,7 +70,7 @@
 - **단백질 구조 예측**: AlphaFold와 같은 모델.
 - **유전체 데이터 분석**: 시퀀스 데이터에 대한 딥러닝 모델.
 
-## 8. 윤리·공정성·프라이버시
+## 9. 윤리·공정성·프라이버시
 
 - 관련 문서: [ethics_fairness_privacy](ethics_fairness_privacy/index.md)
 
@@ -69,7 +78,7 @@
 - **프라이버시 보호**: 연합 학습(Federated Learning), 차등 프라이버시(Differential Privacy).
 - **AI 거버넌스**: AI 시스템의 책임성과 투명성 확보.
 
-## 9. 새로운 학습 패러다임
+## 10. 새로운 학습 패러다임
 
 - 관련 문서: [new_learning_paradigms](new_learning_paradigms/index.md)
 
@@ -77,7 +86,7 @@
 - **대규모 멀티태스크 학습**: 여러 작업을 동시에 학습해 일반화 성능 향상.
 - **메타러닝**: 새로운 작업에 빠르게 적응할 수 있는 모델 학습.
 
-## 10. 하드웨어와 소프트웨어 최적화
+## 11. 하드웨어와 소프트웨어 최적화
 
 - 관련 문서: [hardware_software_optimization](hardware_software_optimization/index.md)
 

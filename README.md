@@ -22,7 +22,7 @@
 - Markdown 작성 규칙
 - 수식 표기 규칙
 - 논문 조사 및 요약 작업 절차
-- `index.md`, `paper_list.md` 관리 규칙
+- `index.md`, `paper_list.jsonl` 관리 규칙
 - 문서 lint 및 품질 점검 기준
 
 ## 주요 안내 문서
@@ -41,6 +41,7 @@
 - [explainable_ai](explainable_ai/index.md)
 - [continual_learning](continual_learning/index.md)
 - [deep_rl](deep_rl/index.md)
+- [multi_agent_system](multi_agent_system/index.md)
 - [generative_models](generative_models/index.md)
 - [medical_bio](medical_bio/index.md)
 - [ethics_fairness_privacy](ethics_fairness_privacy/index.md)
@@ -50,7 +51,7 @@
 각 폴더에는 아래 문서가 순차적으로 정리될 수 있다.
 
 - `index.md`: 해당 분야 문서 목록
-- `paper_list.md`: 조사한 논문 목록
+- `paper_list.jsonl`: 조사한 논문 메타데이터 목록
 - 개별 논문 요약 문서: 논문별 상세 분석 보고서
 
 ## 작업 흐름

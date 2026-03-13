@@ -1,0 +1,1 @@
+.\.venv\Scripts\python.exe paper_viewer.py --dir . --port 8080

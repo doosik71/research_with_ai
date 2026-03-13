@@ -89,6 +89,7 @@ def hello():
 
 - 연구 주제별 작업은 해당 주제 폴더 안에서 수행한다.
 - 각 연구 주제 폴더에는 반드시 `index.md`가 있어야 한다.
+- 각 연구 주제 폴더에는 반드시 `metadata.json`이 있어야 한다.
 - `index.md`는 해당 폴더의 문서 목록 역할을 하며, 새 문서를 추가할 때마다 함께 갱신한다.
 - 특정 분야 작업 요청을 받으면 해당 분야의 폴더에서 자료 조사, 문서 생성, 목록 갱신까지 완료한다.
 - 서브 폴더 인덱스 파일의 각 항목은 논문명으로 정렬한다.
@@ -101,27 +102,53 @@ def hello():
 - [논문명 2](document_2.md)
 ```
 
+### 7.3. 서브 폴더 메타데이터 파일
+
+- 각 연구 주제 폴더에는 `metadata.json` 파일을 둔다.
+- `metadata.json`은 해당 폴더의 연구 주제명과 논문 검색용 키워드를 정의한다.
+- `metadata.json`에는 최소한 아래 필드를 포함한다.
+  - `title`
+  - `keyword`
+- `title`은 사람이 읽는 연구 주제명을 나타내는 문자열이다.
+- `keyword`는 arXiv 등에서 해당 주제 논문을 검색할 때 사용할 문자열 배열이다.
+- 검색 전략이 바뀌거나 더 적절한 검색 문자열이 발견되면 `keyword`를 갱신한다.
+- 새 연구 분야 폴더를 생성할 때는 `index.md`와 함께 `metadata.json`도 반드시 생성한다.
+
+예시:
+
+```json
+{
+  "title": "Continual Learning",
+  "keyword": [
+    "continual learning"
+  ]
+}
+```
+
 ## 8. 논문 조사 규칙
 
 - 논문 조사는 기본적으로 arXiv를 우선 사용한다.
 - 다른 출처가 필요하거나 더 적절한 경우에는 그 이유가 명확할 때만 예외적으로 사용한다.
-- 조사한 논문 목록은 각 연구 분야 폴더의 `paper_list.md`에 기록한다.
-- `paper_list.md` 각 항목에는 아래 정보를 포함한다.
+- 조사한 논문 목록은 각 연구 분야 폴더의 `paper_list.jsonl`에 기록한다.
+- `paper_list.jsonl`의 각 항목에는 아래 정보를 포함한다.
   - 저자명
   - 논문명
   - 발표 연도
   - 논문 URL
+- 요약 보고서 파일명
+- 발표자료 파일명
 - 논문 제목과 저자명은 번역하지 않고 원문 그대로 유지한다.
 - 새 논문 정보를 추가할 때 논문이 중복되지 않도록 관리한다.
+- `summary`는 마크다운 상세 분석 보고서 파일명이며, 없으면 빈 문자열로 둔다.
+- `slide`는 Marp 발표자료 파일명이며, 없으면 빈 문자열로 둔다.
 
 예시:
 
-```markdown
-1. Continual Learning with Elastic Weight Consolidation
-   - **저자**: John Doe, Jane Smith
-   -**연도**: 2020
-   -**URL**: https://arxiv.org/abs/2001.12345
+```json
+{"title":"Continual Learning with Elastic Weight Consolidation","author":"John Doe, Jane Smith","year":"2020","url":"https://arxiv.org/abs/2001.12345","summary":"continual_learning_with_elastic_weight_consolidation.md","slide":"continual_learning_with_elastic_weight_consolidation_slide.md"}
 ```
+
+- 논문 검색에 대한 보다 상세한 규칙은 `RULE_SEARCH.md`의 문서에 명시된 내용을 따른다.
 
 ## 9. 논문 요약 작업 규칙
 
@@ -140,7 +167,7 @@ def hello():
 5. 상세 분석 보고서를 Markdown으로 작성한다.
 6. 해당 연구 분야 폴더에 저장한다.
 7. `index.md`에 링크를 추가한다.
-8. 필요하면 `paper_list.md`를 갱신한다.
+8. 필요하면 `paper_list.jsonl`의 `summary`, `slide` 등 메타데이터를 갱신한다.
 9. 마지막으로 Markdown lint를 수행한다.
 
 ### 9.3 보고서 필수 포함 항목
@@ -211,8 +238,9 @@ docs: update <research area>
 - Markdown 형식과 헤더 구조가 일관적인가
 - 수식 표기가 MathJax 형식으로 정리되었는가
 - 새 문서가 올바른 폴더에 저장되었는가
+- `metadata.json`이 존재하고 내용이 현재 연구 주제와 일치하는가
 - `index.md`가 갱신되었는가
-- 필요 시 `paper_list.md`가 갱신되었는가
+- 필요 시 `paper_list.jsonl`이 갱신되었는가
 - `markdownlint` 검사를 통과했는가
 
 ---
