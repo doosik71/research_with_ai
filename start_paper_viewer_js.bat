@@ -1,1 +1,0 @@
-npm start -- --dir . --port 8080

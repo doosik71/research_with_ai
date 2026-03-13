@@ -99,11 +99,9 @@ $\hat{w}_k$ 근처에서,
 다음처럼 근사한다.
 
 $$
-L^{\mathrm{prox}}_1(w)
-= \hat{L}_1(\hat{w}_1)
-+ (w-\hat{w}_1)^\top \nabla \hat{L}_1(\hat{w}_1)
-+ \frac{1}{2}(w-\hat{w}_1)^\top
-\nabla^2 \hat{L}_1(\hat{w}_1)(w-\hat{w}_1)
+L^{\mathrm{prox}}_1(w) = \hat{L}_1(\hat{w}_1) +
+(w-\hat{w}_1)^\top \nabla \hat{L}_1(\hat{w}_1) +
+\frac{1}{2}(w-\hat{w}_1)^\top \nabla^2 \hat{L}_1(\hat{w}_1)(w-\hat{w}_1)
 $$
 
 일반적인 $k$ task 누적 버전은,
@@ -113,11 +111,11 @@ $$
 
 $$
 L^{\mathrm{prox}}_k(w)
-= \sum_{k'=1}^{k}
+= \sum\_{k'=1}^{k}
 \Big[
-\hat{L}_{k'}(\hat{w}_{k'})
-+ (w-\hat{w}_{k'})^\top \nabla \hat{L}_{k'}(\hat{w}_{k'})
-+ \frac{1}{2}(w-\hat{w}_{k'})^\top H_{k'}(w-\hat{w}_{k'})
+\hat{L}\_{k'}(\hat{w}\_{k'}) +
+(w-\hat{w}\_{k'})^\top \nabla \hat{L}\_{k'}(\hat{w}\_{k'}) +
+\frac{1}{2}(w-\hat{w}\_{k'})^\top H\_{k'}(w-\hat{w}\_{k'})
 \Big]
 $$
 
