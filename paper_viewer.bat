@@ -1,1 +1,0 @@
-npm start -- --dir docs --port 8080
