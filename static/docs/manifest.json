@@ -1,0 +1,124 @@
+[
+  {
+    "id": "continual_learning",
+    "title": "Continual Learning",
+    "keyword": [
+      "continual learning"
+    ]
+  },
+  {
+    "id": "deep_rl",
+    "title": "Deep Reinforcement Learning",
+    "keyword": [
+      "deep reinforcement learning",
+      "reinforcement learning"
+    ]
+  },
+  {
+    "id": "ethics_fairness_privacy",
+    "title": "Ethics, Fairness, and Privacy",
+    "keyword": [
+      "ai fairness",
+      "ai ethics",
+      "differential privacy"
+    ]
+  },
+  {
+    "id": "explainable_ai",
+    "title": "Explainable AI",
+    "keyword": [
+      "explainable ai",
+      "xai"
+    ]
+  },
+  {
+    "id": "generative_models",
+    "title": "Generative Models",
+    "keyword": [
+      "generative models",
+      "diffusion models",
+      "gan"
+    ]
+  },
+  {
+    "id": "hardware_software_optimization",
+    "title": "Hardware and Software Optimization",
+    "keyword": [
+      "ai systems optimization",
+      "distributed training",
+      "model optimization"
+    ]
+  },
+  {
+    "id": "instance_segmentation",
+    "title": "Instance Segmentation",
+    "keyword": [
+      "instance segmentation",
+      "mask r-cnn",
+      "panoptic segmentation"
+    ]
+  },
+  {
+    "id": "large_pretrained_models",
+    "title": "Large Pretrained Models",
+    "keyword": [
+      "large language models",
+      "foundation models",
+      "pretrained models"
+    ]
+  },
+  {
+    "id": "medical_bio",
+    "title": "Medical and Bio Applications",
+    "keyword": [
+      "medical image analysis",
+      "medical ai",
+      "bioinformatics deep learning"
+    ]
+  },
+  {
+    "id": "model_efficiency_and_lightweight",
+    "title": "Model Efficiency and Lightweight",
+    "keyword": [
+      "model compression",
+      "efficient deep learning",
+      "knowledge distillation"
+    ]
+  },
+  {
+    "id": "moving_object_tracking",
+    "title": "Moving Object Tracking",
+    "keyword": [
+      "moving object tracking",
+      "multiple object tracking",
+      "visual object tracking"
+    ]
+  },
+  {
+    "id": "multi_agent_system",
+    "title": "Multi-Agent System",
+    "keyword": [
+      "multi-agent system",
+      "multi-agent reinforcement learning",
+      "llm multi-agent"
+    ]
+  },
+  {
+    "id": "new_learning_paradigms",
+    "title": "New Learning Paradigms",
+    "keyword": [
+      "self-supervised learning",
+      "meta learning",
+      "few-shot learning"
+    ]
+  },
+  {
+    "id": "semantic_segmentation",
+    "title": "Semantic Segmentation",
+    "keyword": [
+      "semantic segmentation",
+      "scene parsing",
+      "segmentation transformer"
+    ]
+  }
+]
