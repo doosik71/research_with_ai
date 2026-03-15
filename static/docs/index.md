@@ -1,5 +1,6 @@
 # Index
 
+- [Agentic AI](agentic_ai/index.md)
 - [Continual Learning](continual_learning/index.md)
 - [Deep RL](deep_rl/index.md)
 - [Ethics, Fairness, and Privacy](ethics_fairness_privacy/index.md)

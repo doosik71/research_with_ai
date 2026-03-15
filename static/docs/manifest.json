@@ -1,5 +1,96 @@
 [
   {
+    "id": "activation_function",
+    "title": "Activation Function",
+    "keyword": [
+      "activation function"
+    ]
+  },
+  {
+    "id": "active_learning",
+    "title": "Active Learning",
+    "keyword": [
+      "active learning"
+    ]
+  },
+  {
+    "id": "agentic_ai",
+    "title": "Agentic AI",
+    "keyword": [
+      "agentic ai"
+    ]
+  },
+  {
+    "id": "ai_healthcare",
+    "title": "AI Healthcare",
+    "keyword": [
+      "ai in healthcare"
+    ]
+  },
+  {
+    "id": "anomaly_detection",
+    "title": "Anomaly Detection",
+    "keyword": [
+      "anomaly detection"
+    ]
+  },
+  {
+    "id": "artificial_general_intelligence",
+    "title": "Artificial General Intelligence",
+    "keyword": [
+      "artificial general intelligence"
+    ]
+  },
+  {
+    "id": "artificial_intelligence",
+    "title": "Artificial Intelligence",
+    "keyword": [
+      "artificial intelligence"
+    ]
+  },
+  {
+    "id": "audio_generation",
+    "title": "Audio Generation",
+    "keyword": [
+      "audio generation"
+    ]
+  },
+  {
+    "id": "autoencoder",
+    "title": "Autoencoder",
+    "keyword": [
+      "autoencoder"
+    ]
+  },
+  {
+    "id": "bayesian_neural_networks",
+    "title": "Bayesian Neural Networks",
+    "keyword": [
+      "bayesian neural networks"
+    ]
+  },
+  {
+    "id": "binary_neural_networks",
+    "title": "Binary Neural Networks",
+    "keyword": [
+      "binary neural networks"
+    ]
+  },
+  {
+    "id": "blood_pressure_estimation_ppg",
+    "title": "Blood Pressure Estimation Ppg",
+    "keyword": [
+      "blood pressure estimation ppg"
+    ]
+  },
+  {
+    "id": "chain_of_thought",
+    "title": "Chain Of Thought",
+    "keyword": [
+      "chain of thought"
+    ]
+  },
+  {
     "id": "continual_learning",
     "title": "Continual Learning",
     "keyword": [
@@ -7,11 +98,67 @@
     ]
   },
   {
-    "id": "deep_rl",
+    "id": "contrastive_learning",
+    "title": "Contrastive Learning",
+    "keyword": [
+      "contrastive learning"
+    ]
+  },
+  {
+    "id": "convolutional_neural_networks",
+    "title": "Convolutional Neural Networks",
+    "keyword": [
+      "convolutional neural networks"
+    ]
+  },
+  {
+    "id": "correlation_filter_tracking",
+    "title": "Correlation Filter Tracking",
+    "keyword": [
+      "correlation filter tracking"
+    ]
+  },
+  {
+    "id": "curriculum_learning",
+    "title": "Curriculum Learning",
+    "keyword": [
+      "curriculum learning"
+    ]
+  },
+  {
+    "id": "deep_learning",
+    "title": "Deep Learning",
+    "keyword": [
+      "deep learning"
+    ]
+  },
+  {
+    "id": "deep_reinforcement_learning",
     "title": "Deep Reinforcement Learning",
     "keyword": [
       "deep reinforcement learning",
       "reinforcement learning"
+    ]
+  },
+  {
+    "id": "diffusion_models",
+    "title": "Diffusion Models",
+    "keyword": [
+      "diffusion models"
+    ]
+  },
+  {
+    "id": "domain_adaptation",
+    "title": "Domain Adaptation",
+    "keyword": [
+      "domain adaptation"
+    ]
+  },
+  {
+    "id": "energy_score",
+    "title": "Energy Score",
+    "keyword": [
+      "energy score"
     ]
   },
   {
@@ -32,12 +179,82 @@
     ]
   },
   {
+    "id": "federated_learning",
+    "title": "Federated Learning",
+    "keyword": [
+      "federated learning"
+    ]
+  },
+  {
+    "id": "few-shot_learning",
+    "title": "Few Shot Learning",
+    "keyword": [
+      "few shot learning"
+    ]
+  },
+  {
+    "id": "foundation_model",
+    "title": "Foundation Model",
+    "keyword": [
+      "foundation model"
+    ]
+  },
+  {
+    "id": "gaussian_mixture_model",
+    "title": "Gaussian Mixture Model",
+    "keyword": [
+      "gaussian mixture model"
+    ]
+  },
+  {
+    "id": "gemini",
+    "title": "Gemini",
+    "keyword": [
+      "gemini"
+    ]
+  },
+  {
+    "id": "generative_adversarial_networks",
+    "title": "Generative Adversarial Networks",
+    "keyword": [
+      "generative adversarial networks"
+    ]
+  },
+  {
     "id": "generative_models",
     "title": "Generative Models",
     "keyword": [
       "generative models",
       "diffusion models",
       "gan"
+    ]
+  },
+  {
+    "id": "google_speech_commands",
+    "title": "Google Speech Commands",
+    "keyword": [
+      "google speech commands"
+    ]
+  },
+  {
+    "id": "gpt",
+    "title": "Gpt",
+    "keyword": [
+      "gpt"
+    ]
+  },
+  {
+    "id": "graph_attention_networks",
+    "title": "Graph Attention Networks",
+    "keyword": [
+      "graph attention networks"
+    ]
+  },
+  {
+    "id": "graph_neural_networks",
+    "title": "Graph Neural Networks",
+    "keyword": [
+      "graph neural networks"
     ]
   },
   {
@@ -50,12 +267,82 @@
     ]
   },
   {
+    "id": "human_computer_interaction",
+    "title": "Human Computer Interaction",
+    "keyword": [
+      "human computer interaction"
+    ]
+  },
+  {
+    "id": "human_pose_estimation",
+    "title": "Human Pose Estimation",
+    "keyword": [
+      "human pose estimation"
+    ]
+  },
+  {
+    "id": "image_classification",
+    "title": "Image Classification",
+    "keyword": [
+      "image classification"
+    ]
+  },
+  {
+    "id": "imitation_learning",
+    "title": "Imitation Learning",
+    "keyword": [
+      "imitation learning"
+    ]
+  },
+  {
+    "id": "in-context_learning",
+    "title": "In Context Learning",
+    "keyword": [
+      "in context learning"
+    ]
+  },
+  {
     "id": "instance_segmentation",
     "title": "Instance Segmentation",
     "keyword": [
       "instance segmentation",
       "mask r-cnn",
       "panoptic segmentation"
+    ]
+  },
+  {
+    "id": "instance_segmentation_3d",
+    "title": "Instance Segmentation 3d",
+    "keyword": [
+      "instance segmentation 3d"
+    ]
+  },
+  {
+    "id": "instance_segmentation_video",
+    "title": "Instance Segmentation Video",
+    "keyword": [
+      "instance segmentation video"
+    ]
+  },
+  {
+    "id": "keyword_spotting",
+    "title": "Keyword Spotting",
+    "keyword": [
+      "keyword spotting"
+    ]
+  },
+  {
+    "id": "knowledge_distillation",
+    "title": "Knowledge Distillation",
+    "keyword": [
+      "knowledge distillation"
+    ]
+  },
+  {
+    "id": "large_language_model",
+    "title": "Large Language Model",
+    "keyword": [
+      "large language model"
     ]
   },
   {
@@ -68,12 +355,68 @@
     ]
   },
   {
+    "id": "long_short-term_memory",
+    "title": "Long Short Term Memory",
+    "keyword": [
+      "long short term memory"
+    ]
+  },
+  {
+    "id": "low_rank_adaptation",
+    "title": "Low Rank Adaptation",
+    "keyword": [
+      "low rank adaptation"
+    ]
+  },
+  {
+    "id": "mamba",
+    "title": "Mamba",
+    "keyword": [
+      "mamba"
+    ]
+  },
+  {
+    "id": "masked_autoencoders",
+    "title": "Masked Autoencoders",
+    "keyword": [
+      "masked autoencoders"
+    ]
+  },
+  {
     "id": "medical_bio",
     "title": "Medical and Bio Applications",
     "keyword": [
       "medical image analysis",
       "medical ai",
       "bioinformatics deep learning"
+    ]
+  },
+  {
+    "id": "medical_image_analysis",
+    "title": "Medical Image Analysis",
+    "keyword": [
+      "medical image analysis"
+    ]
+  },
+  {
+    "id": "meta-learning",
+    "title": "Meta Learning",
+    "keyword": [
+      "meta learning"
+    ]
+  },
+  {
+    "id": "metric_learning",
+    "title": "Metric Learning",
+    "keyword": [
+      "metric learning"
+    ]
+  },
+  {
+    "id": "mixture_of_experts",
+    "title": "Mixture Of Experts",
+    "keyword": [
+      "mixture of experts"
     ]
   },
   {
@@ -86,12 +429,33 @@
     ]
   },
   {
+    "id": "model_interpretability",
+    "title": "Model Interpretability",
+    "keyword": [
+      "model interpretability"
+    ]
+  },
+  {
+    "id": "model_quantization",
+    "title": "Model Quantization",
+    "keyword": [
+      "model quantization"
+    ]
+  },
+  {
     "id": "moving_object_tracking",
     "title": "Moving Object Tracking",
     "keyword": [
       "moving object tracking",
       "multiple object tracking",
       "visual object tracking"
+    ]
+  },
+  {
+    "id": "multi-task_learning",
+    "title": "Multi Task Learning",
+    "keyword": [
+      "multi task learning"
     ]
   },
   {
@@ -104,6 +468,27 @@
     ]
   },
   {
+    "id": "neural_architecture_search",
+    "title": "Neural Architecture Search",
+    "keyword": [
+      "neural architecture search"
+    ]
+  },
+  {
+    "id": "neural_rendering",
+    "title": "Neural Rendering",
+    "keyword": [
+      "neural rendering"
+    ]
+  },
+  {
+    "id": "neural_turing_machine",
+    "title": "Neural Turing Machine",
+    "keyword": [
+      "neural turing machine"
+    ]
+  },
+  {
     "id": "new_learning_paradigms",
     "title": "New Learning Paradigms",
     "keyword": [
@@ -113,12 +498,280 @@
     ]
   },
   {
+    "id": "object_detection",
+    "title": "Object Detection",
+    "keyword": [
+      "object detection"
+    ]
+  },
+  {
+    "id": "object_tracking",
+    "title": "Object Tracking",
+    "keyword": [
+      "object tracking"
+    ]
+  },
+  {
+    "id": "quantum_computation",
+    "title": "Quantum Computation",
+    "keyword": [
+      "quantum computation"
+    ]
+  },
+  {
+    "id": "random_sample_consensus_(ransac)",
+    "title": "Random Sample Consensus (ransac)",
+    "keyword": [
+      "random sample consensus",
+      "ransac"
+    ]
+  },
+  {
+    "id": "recurrent_neural_networks",
+    "title": "Recurrent Neural Networks",
+    "keyword": [
+      "recurrent neural networks"
+    ]
+  },
+  {
+    "id": "reinforcement_learning",
+    "title": "Reinforcement Learning",
+    "keyword": [
+      "reinforcement learning"
+    ]
+  },
+  {
+    "id": "retrieval-augmented_generation",
+    "title": "Retrieval Augmented Generation",
+    "keyword": [
+      "retrieval augmented generation"
+    ]
+  },
+  {
+    "id": "rlvr",
+    "title": "Rlvr",
+    "keyword": [
+      "rlvr"
+    ]
+  },
+  {
+    "id": "rwkv",
+    "title": "Rwkv",
+    "keyword": [
+      "rwkv"
+    ]
+  },
+  {
+    "id": "segment_anything",
+    "title": "Segment Anything",
+    "keyword": [
+      "segment anything"
+    ]
+  },
+  {
+    "id": "self-supervised_learning",
+    "title": "Self Supervised Learning",
+    "keyword": [
+      "self supervised learning"
+    ]
+  },
+  {
     "id": "semantic_segmentation",
     "title": "Semantic Segmentation",
     "keyword": [
       "semantic segmentation",
       "scene parsing",
       "segmentation transformer"
+    ]
+  },
+  {
+    "id": "semi-supervised_learning",
+    "title": "Semi Supervised Learning",
+    "keyword": [
+      "semi supervised learning"
+    ]
+  },
+  {
+    "id": "simultaneous_localization_and_mapping_(slam)",
+    "title": "Simultaneous Localization And Mapping (slam)",
+    "keyword": [
+      "simultaneous localization and mapping",
+      "slam"
+    ]
+  },
+  {
+    "id": "skin_burn_image_segmentation",
+    "title": "Skin Burn Image Segmentation",
+    "keyword": [
+      "skin burn image segmentation"
+    ]
+  },
+  {
+    "id": "sleep_stage",
+    "title": "Sleep Stage",
+    "keyword": [
+      "sleep stage"
+    ]
+  },
+  {
+    "id": "speaker_diarization",
+    "title": "Speaker Diarization",
+    "keyword": [
+      "speaker diarization"
+    ]
+  },
+  {
+    "id": "speech_recognition",
+    "title": "Speech Recognition",
+    "keyword": [
+      "speech recognition"
+    ]
+  },
+  {
+    "id": "speech_synthesis",
+    "title": "Speech Synthesis",
+    "keyword": [
+      "speech synthesis"
+    ]
+  },
+  {
+    "id": "state_space_models",
+    "title": "State Space Models",
+    "keyword": [
+      "state space models"
+    ]
+  },
+  {
+    "id": "structure_from_motion",
+    "title": "Structure From Motion",
+    "keyword": [
+      "structure from motion"
+    ]
+  },
+  {
+    "id": "surgical_assistant_robot",
+    "title": "Surgical Assistant Robot",
+    "keyword": [
+      "surgical assistant robot"
+    ]
+  },
+  {
+    "id": "surgical_instrument_detection",
+    "title": "Surgical Instrument Detection",
+    "keyword": [
+      "surgical instrument detection"
+    ]
+  },
+  {
+    "id": "surgical_instrument_segmentation",
+    "title": "Surgical Instrument Segmentation",
+    "keyword": [
+      "surgical instrument segmentation"
+    ]
+  },
+  {
+    "id": "surgical_instrument_tracking",
+    "title": "Surgical Instrument Tracking",
+    "keyword": [
+      "surgical instrument tracking"
+    ]
+  },
+  {
+    "id": "surgical_phase_recognition",
+    "title": "Surgical Phase Recognition",
+    "keyword": [
+      "surgical phase recognition"
+    ]
+  },
+  {
+    "id": "surgical_robot_voice_control",
+    "title": "Surgical Robot Voice Control",
+    "keyword": [
+      "surgical robot voice control"
+    ]
+  },
+  {
+    "id": "time_series_analysis",
+    "title": "Time Series Analysis",
+    "keyword": [
+      "time series analysis"
+    ]
+  },
+  {
+    "id": "time_series_anomaly_detection",
+    "title": "Time Series Anomaly Detection",
+    "keyword": [
+      "time series anomaly detection"
+    ]
+  },
+  {
+    "id": "transfer_learning",
+    "title": "Transfer Learning",
+    "keyword": [
+      "transfer learning"
+    ]
+  },
+  {
+    "id": "transformers",
+    "title": "Transformers",
+    "keyword": [
+      "transformers"
+    ]
+  },
+  {
+    "id": "tree_of_thoughts",
+    "title": "Tree Of Thoughts",
+    "keyword": [
+      "tree of thoughts"
+    ]
+  },
+  {
+    "id": "u-net",
+    "title": "U Net",
+    "keyword": [
+      "u-net"
+    ]
+  },
+  {
+    "id": "unsupervised_learning",
+    "title": "Unsupervised Learning",
+    "keyword": [
+      "unsupervised learning"
+    ]
+  },
+  {
+    "id": "vision_transformers",
+    "title": "Vision Transformers",
+    "keyword": [
+      "vision transformers"
+    ]
+  },
+  {
+    "id": "vla",
+    "title": "Vla",
+    "keyword": [
+      "vla"
+    ]
+  },
+  {
+    "id": "vlm",
+    "title": "Vlm",
+    "keyword": [
+      "vlm"
+    ]
+  },
+  {
+    "id": "voice_activity_detection",
+    "title": "Voice Activity Detection",
+    "keyword": [
+      "voice activity detection"
+    ]
+  },
+  {
+    "id": "zero-shot_learning",
+    "title": "Zero Shot Learning",
+    "keyword": [
+      "zero shot learning"
     ]
   }
 ]

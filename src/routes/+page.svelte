@@ -26,15 +26,26 @@
 	let showPaperPanel = $state(true);
 
 	// Search State
-	let showSearchInput = $state(false);
-	let searchQuery = $state('');
+	let showSearchTopicInput = $state(false);
+	let showSearchPaperInput = $state(false);
+	let searchTopicQuery = $state('');
+	let searchPaperQuery = $state('');
+
+	let filteredTopics = $derived(
+		topics.filter(
+			(p) =>
+				searchTopicQuery.trim() === '' ||
+				p.title.toLowerCase().includes(searchTopicQuery.toLowerCase()) ||
+				p.keyword.join(' ').toLowerCase().includes(searchTopicQuery.toLowerCase())
+		)
+	);
 
 	let filteredPapers = $derived(
 		papers.filter(
 			(p) =>
-				searchQuery.trim() === '' ||
-				p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				p.author.toLowerCase().includes(searchQuery.toLowerCase())
+				searchPaperQuery.trim() === '' ||
+				p.title.toLowerCase().includes(searchPaperQuery.toLowerCase()) ||
+				p.author.toLowerCase().includes(searchPaperQuery.toLowerCase())
 		)
 	);
 
@@ -301,10 +312,29 @@
 				>
 				Topics
 			</h2>
+			<div class="search-container">
+				<button
+					class="search-button"
+					title="Search topics"
+					onclick={() => (showSearchTopicInput = !showSearchTopicInput)}
+				>
+					<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 512 512">
+						<path
+							fill="currentColor"
+							d="M416 208c0 45.9-14.9 88.3-40 122.7L500 457.3c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 378c-34.4 25.1-76.8 40-122.7 40C93.1 418 0 324.9 0 208S93.1 0 208 0s208 93.1 208 208zM208 352c79.5 0 144-64.5 144-144S287.5 64 208 64 64 128.5 64 208s64.5 144 144 144z"
+						/>
+					</svg>
+				</button>
+				{#if showSearchTopicInput}
+					<div class="search-popover">
+						<input type="text" bind:value={searchTopicQuery} placeholder="Filter by keywords" />
+					</div>
+				{/if}
+			</div>
 		</div>
 		<div class="topic-content">
 			<ul>
-				{#each topics as topic (topic.id)}
+				{#each filteredTopics as topic (topic.id)}
 					<li>
 						<button
 							class:active={selectedTopic?.id === topic.id}
@@ -340,7 +370,7 @@
 				<button
 					class="search-button"
 					title="Search papers"
-					onclick={() => (showSearchInput = !showSearchInput)}
+					onclick={() => (showSearchPaperInput = !showSearchPaperInput)}
 				>
 					<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 512 512">
 						<path
@@ -349,9 +379,13 @@
 						/>
 					</svg>
 				</button>
-				{#if showSearchInput}
+				{#if showSearchPaperInput}
 					<div class="search-popover">
-						<input type="text" bind:value={searchQuery} placeholder="Filter by title or author" />
+						<input
+							type="text"
+							bind:value={searchPaperQuery}
+							placeholder="Filter by title or author"
+						/>
 					</div>
 				{/if}
 			</div>
@@ -488,41 +522,46 @@
 			</div>
 		{:else}
 			<div class="placeholder">
-				<span
-					>Select a
-					<button
-						type="button"
-						class="toolbar-button"
-						title="분석 보고서 보기"
-						disabled={!selectedPaper?.summary}
-						onclick={() => {
-							if (selectedPaper) loadPreview(selectedPaper, 'summary');
-						}}
-					>
-						<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 512 512"
-							><path
-								fill="currentColor"
-								d="M168 80c-13.3 0-24 10.7-24 24l0 304c0 8.4-1.4 16.5-4.1 24L440 432c13.3 0 24-10.7 24-24l0-304c0-13.3-10.7-24-24-24L168 80zM72 480c-39.8 0-72-32.2-72-72L0 112C0 98.7 10.7 88 24 88s24 10.7 24 24l0 296c0 13.3 10.7 24 24 24s24-10.7 24-24l0-304c0-39.8 32.2-72 72-72l272 0c39.8 0 72 32.2 72 72l0 304c0 39.8-32.2 72-72 72L72 480zM192 152c0-13.3 10.7-24 24-24l48 0c13.3 0 24 10.7 24 24l0 48c0 13.3-10.7 24-24 24l-48 0c-13.3 0-24-10.7-24-24l0-48zm152 24l48 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-48 0c-13.3 0-24-10.7-24-24s10.7-24 24-24zM216 256l176 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-176 0c-13.3 0-24-10.7-24-24s10.7-24 24-24zm0 80l176 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-176 0c-13.3 0-24-10.7-24-24s10.7-24 24-24z"
-							/></svg
-						>
-					</button>
-					or
-					<button
-						type="button"
-						class="toolbar-button"
-						title="발표자료 보기"
-						disabled={!selectedPaper?.slide}
-						onclick={() => {
-							if (selectedPaper) loadPreview(selectedPaper, 'slide');
-						}}
-						><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 512 512"
-							><path
-								fill="currentColor"
-								d="M448 96l0 256-384 0 0-256 384 0zM64 32C28.7 32 0 60.7 0 96L0 352c0 35.3 28.7 64 64 64l144 0-16 48-72 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l272 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-72 0-16-48 144 0c35.3 0 64-28.7 64-64l0-256c0-35.3-28.7-64-64-64L64 32z"
-							/></svg
-						>
-					</button> to preview</span
-				>
+				{#if selectedTopic}
+					<h3>
+						{selectedTopic.title}
+						({selectedTopic.id})
+					</h3>
+
+					{#if selectedPaper}
+						<h2>{selectedPaper?.title}</h2>
+						<div>
+							{selectedPaper?.author}
+							{#if selectedPaper?.year}
+								({selectedPaper?.year})
+							{/if}
+						</div>
+						<div>
+							Select
+							<button
+								type="button"
+								class="toolbar-button"
+								disabled={!selectedPaper?.url}
+								onclick={() => openExternal('arxiv')}
+							>
+								arXiv
+							</button>
+							or
+							<button
+								type="button"
+								class="toolbar-button"
+								disabled={!selectedPaper?.url}
+								onclick={() => openExternal('pdf')}
+							>
+								PDF
+							</button>
+						</div>
+					{:else}
+						<div>Select a paper.</div>
+					{/if}
+				{:else}
+					<div>Select a research topic.</div>
+				{/if}
 			</div>
 		{/if}
 	</main>
@@ -937,7 +976,7 @@
 		transition: background 0.2s;
 	}
 	.preview-header {
-		padding: 0.55rem 0.75rem;
+		padding: 0.34rem 0.5rem;
 		background: var(--bg-header);
 		border-bottom: 1px solid var(--border-default);
 		flex-shrink: 0;
@@ -969,7 +1008,7 @@
 		font-size: 0.72rem;
 		font-weight: 600;
 		letter-spacing: 0.04em;
-		padding: 0.2rem 0.75rem;
+		padding: 0 0.75rem;
 		min-height: 28px;
 		cursor: pointer;
 		transition:
@@ -1107,6 +1146,7 @@
 		height: 100%;
 		color: var(--text-muted);
 		font-size: 0.85rem;
+		padding: 2em;
 	}
 	.placeholder-header {
 		align-self: flex-end;
