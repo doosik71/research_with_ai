@@ -3,6 +3,9 @@
  *
  * A lightweight Marp-compatible Markdown-to-HTML renderer.
  * Designed for Cloudflare Pages / Edge environments (no Node.js dependencies).
+ * Markdown block rendering is delegated to markdown-it; all Marp-specific
+ * features (directives, SVG wrapping, math protection, bg images, etc.) are
+ * handled by custom renderer-rule overrides and pre/post-processing steps.
  *
  * Supported Marp syntax:
  *  - Slide splitting by `---`
@@ -30,6 +33,11 @@
  *  - Standard Markdown: headings, bold, italic, strikethrough, code, blockquote,
  *    tables, links, horizontal rule, ordered/unordered lists
  */
+
+import MarkdownIt, { type Options as MarkdownItOptions } from 'markdown-it';
+import type Token from 'markdown-it/lib/token.mjs';
+import type Renderer from 'markdown-it/lib/renderer.mjs';
+import type StateCore from 'markdown-it/lib/rules_core/state_core.mjs';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -80,7 +88,6 @@ interface ParsedSlide {
 const THEMES: Record<string, string> = {
 	default: `
 /* Marp-lite: default theme */
-.marp-slide-wrapper { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; }
 section.marp-slide {
   width: 100%; height: 100%;
   background: #fff; color: #333;
@@ -113,7 +120,6 @@ section.marp-slide.invert blockquote { border-color: #555; color: #bbb; }
 
 	gaia: `
 /* Marp-lite: gaia theme */
-.marp-slide-wrapper { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f0e8; }
 section.marp-slide {
   width: 100%; height: 100%;
   background: #fff7ed; color: #433;
@@ -146,7 +152,6 @@ section.marp-slide.invert h1, section.marp-slide.invert h2 { color: #f96 !import
 
 	uncover: `
 /* Marp-lite: uncover theme */
-.marp-slide-wrapper { font-family: 'Helvetica Neue', Arial, sans-serif; background: #e8e8e8; }
 section.marp-slide {
   width: 100%; height: 100%;
   background: #fff; color: #222;
@@ -241,7 +246,7 @@ section.marp-slide.marp-split-right .marp-split-content {
 `;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Inline Markdown renderer (no external deps)
+// escapeHtml  (헤더/푸터 인라인 렌더링 등 내부에서 여전히 필요)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function escapeHtml(text: string): string {
@@ -253,106 +258,186 @@ function escapeHtml(text: string): string {
 		.replace(/'/g, '&#39;');
 }
 
-function renderInline(text: string, allowHtml: boolean): string {
-	// Protect code spans first
-	const codeSpans: string[] = [];
-	text = text.replace(/`([^`]+)`/g, (_, code) => {
-		codeSpans.push(`<code>${escapeHtml(code)}</code>`);
-		return `\x00CODE${codeSpans.length - 1}\x00`;
+// ─────────────────────────────────────────────────────────────────────────────
+// buildMd — markdown-it 인스턴스 + Marp 전용 renderer-rule override
+//
+// 대체하는 기존 함수: renderBlocks(), renderInline(), renderImage(),
+//                     renderList(), parseTableRow()
+//
+// Override 목록:
+//   image       — ![bg ...] 플레이스홀더 / 인라인 크기·필터 속성 주입
+//   fence       — 기존 동작 유지 (언어 클래스 보존)
+//   heading_open — <!--fit--> 감지 → .marp-fit-heading span 삽입
+//   html_block  — <style scoped> → <style data-scoped> 변환
+//   bullet_list_open — `* ` 첫 마커 → marp-fragment 클래스 주입
+//   ordered_list_open — `1) ` 스타일 → marp-fragment 클래스 주입
+// ─────────────────────────────────────────────────────────────────────────────
+
+function buildMd(allowHtml: boolean): MarkdownIt {
+	const md = new MarkdownIt({
+		html: allowHtml,
+		linkify: true,
+		typographer: true,
+		breaks: false
 	});
 
-	// Math $...$ / $$...$$ — MathJax가 직접 처리하도록 원문 보호
-	// 볼드/이탤릭 치환에서 수식 내부의 _ * 가 오염되지 않도록 플레이스홀더로 보호 후 복원
-	const mathSpans: string[] = [];
-	text = text.replace(/\$\$[\s\S]+?\$\$|\$[^$\n]+?\$/g, (match) => {
-		mathSpans.push(match);
-		return `\x00MATH${mathSpans.length - 1}\x00`;
+	// ── image: ![bg ...] / 인라인 크기·필터 ──────────────────────────────────
+	md.renderer.rules.image = (tokens: Token[], idx: number): string => {
+		const token = tokens[idx];
+		const src = token.attrGet('src') ?? '';
+		const alt = token.content; // markdown-it이 children을 stringify한 값
+
+		const keywords = alt.split(/\s+/);
+		if (keywords.includes('bg')) {
+			// 배경 이미지: extractBackgrounds()가 처리할 플레이스홀더로 치환
+			return `<!-- bg:${src}:${alt} -->`;
+		}
+
+		// 인라인 이미지 — 크기·필터 속성 처리
+		let style = '';
+		const w = alt.match(/(?:width:|w:)(\S+)/);
+		const h = alt.match(/(?:height:|h:)(\S+)/);
+		if (w) style += `width:${w[1]};`;
+		if (h) style += `height:${h[1]};`;
+
+		const filterKws = [
+			'blur',
+			'brightness',
+			'contrast',
+			'grayscale',
+			'hue-rotate',
+			'invert',
+			'opacity',
+			'saturate',
+			'sepia',
+			'drop-shadow'
+		];
+		const filters: string[] = [];
+		for (const kw of filterKws) {
+			const m = alt.match(new RegExp(`${kw}(?::([\\S]+))?`));
+			if (m) filters.push(m[1] ? `${kw}(${m[1]})` : `${kw}(1)`);
+		}
+		if (filters.length) style += `filter:${filters.join(' ')};`;
+
+		const cleanAlt = alt
+			.replace(/(?:width:|w:|height:|h:)\S+/g, '')
+			.replace(new RegExp(`(?:${filterKws.join('|')})(?::\\S+)?`, 'g'), '')
+			.replace(/\s+/g, ' ')
+			.trim();
+
+		return `<img src="${escapeHtml(src)}" alt="${escapeHtml(cleanAlt)}"${style ? ` style="${style}"` : ''}>`;
+	};
+
+	// ── heading_open/inline/close: <!--fit--> 감지 ──────────────────────────
+	// core rule에서 inline content를 미리 수정하고,
+	// heading_open/close에 data-marp-fit 속성을 마킹한다.
+	// renderer rule은 해당 속성 유무에 따라 span을 삽입/제거한다.
+	md.core.ruler.push('marp_fit_heading', (state: StateCore) => {
+		const tokens = state.tokens;
+		for (let i = 0; i < tokens.length - 2; i++) {
+			if (tokens[i].type !== 'heading_open') continue;
+			const inline = tokens[i + 1];
+			if (!inline || inline.type !== 'inline') continue;
+			if (!/<!--\s*fit\s*-->/.test(inline.content)) continue;
+
+			// <!--fit--> 제거
+			inline.content = inline.content.replace(/<!--\s*fit\s*-->\s*/g, '').trim();
+			// children 재파싱을 위해 초기화 (markdown-it이 렌더 시 재생성)
+			inline.children = [];
+			// heading_open / heading_close 양쪽에 마킹
+			tokens[i].attrSet('data-marp-fit', '1');
+			if (tokens[i + 2]?.type === 'heading_close') {
+				tokens[i + 2].attrSet('data-marp-fit', '1');
+			}
+		}
 	});
 
-	// Extended image syntax: ![alt keywords](url)
-	text = text.replace(/!\[([^\]]*)\]\(([^)]*)\)/g, (_, alt, url) => {
-		return renderImage(alt, url);
-	});
+	md.renderer.rules.heading_open = (
+		tokens: Token[],
+		idx: number,
+		options: MarkdownItOptions,
+		_env: unknown,
+		self: Renderer
+	): string => {
+		const token = tokens[idx];
+		const isFit = token.attrGet('data-marp-fit') === '1';
+		if (isFit)
+			token.attrs = (token.attrs ?? []).filter(([k]: [string, string]) => k !== 'data-marp-fit');
+		const base = self.renderToken(tokens, idx, options);
+		return isFit ? base + '<span class="marp-fit-heading">' : base;
+	};
 
-	// Links: [text](url)
-	text = text.replace(/\[([^\]]*)\]\(([^)]*)\)/g, (_, linkText, url) => {
-		return `<a href="${escapeHtml(url)}">${linkText}</a>`;
-	});
+	md.renderer.rules.heading_close = (
+		tokens: Token[],
+		idx: number,
+		options: MarkdownItOptions,
+		_env: unknown,
+		self: Renderer
+	): string => {
+		const token = tokens[idx];
+		const isFit = token.attrGet('data-marp-fit') === '1';
+		if (isFit)
+			token.attrs = (token.attrs ?? []).filter(([k]: [string, string]) => k !== 'data-marp-fit');
+		const base = self.renderToken(tokens, idx, options);
+		return isFit ? '</span>' + base : base;
+	};
 
-	// Bold + Italic
-	text = text.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
-	text = text.replace(/___(.+?)___/g, '<strong><em>$1</em></strong>');
-	// Bold
-	text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-	text = text.replace(/__(.+?)__/g, '<strong>$1</strong>');
-	// Italic
-	text = text.replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
-	text = text.replace(/_([^_\n]+?)_/g, '<em>$1</em>');
-	// Strikethrough
-	text = text.replace(/~~(.+?)~~/g, '<del>$1</del>');
+	// ── html_block: <style scoped> → <style data-scoped> ─────────────────────
+	if (allowHtml) {
+		md.renderer.rules.html_block = (tokens: Token[], idx: number): string => {
+			return tokens[idx].content.replace(/<style(\s+scoped)(\s*>)/gi, '<style data-scoped$2');
+		};
+	}
 
-	// Restore code spans
-	text = text.replace(/\x00CODE(\d+)\x00/g, (_, i) => codeSpans[parseInt(i)]);
+	// ── bullet_list_open: `* ` 마커 → marp-fragment ──────────────────────────
+	// markdown-it은 `*`와 `-` 모두 bullet_list로 처리하며
+	// markup 속성으로 원래 마커 문자를 보존한다.
+	md.renderer.rules.bullet_list_open = (
+		tokens: Token[],
+		idx: number,
+		options: MarkdownItOptions,
+		_env: unknown,
+		self: Renderer
+	): string => {
+		const token = tokens[idx];
+		if (token.markup === '*') {
+			token.attrJoin('class', 'marp-fragment');
+		}
+		return self.renderToken(tokens, idx, options);
+	};
 
-	// Restore math spans (원문 $...$ 그대로 복원 — MathJax가 브라우저에서 처리)
-	text = text.replace(/\x00MATH(\d+)\x00/g, (_, i) => mathSpans[parseInt(i)]);
+	// ── ordered_list_open: `1)` 스타일 → marp-fragment ───────────────────────
+	// markup이 ')' 이면 `1)` 스타일
+	md.renderer.rules.ordered_list_open = (
+		tokens: Token[],
+		idx: number,
+		options: MarkdownItOptions,
+		_env: unknown,
+		self: Renderer
+	): string => {
+		const token = tokens[idx];
+		if (token.markup === ')') {
+			token.attrJoin('class', 'marp-fragment');
+		}
+		return self.renderToken(tokens, idx, options);
+	};
 
-	return text;
+	return md;
 }
 
-function renderImage(alt: string, url: string): string {
-	const keywords = alt.split(/\s+/);
-	const isBg = keywords.includes('bg');
+// ─────────────────────────────────────────────────────────────────────────────
+// renderInline — 헤더/푸터의 인라인 Markdown 렌더링에 사용
+// (markdown-it 인스턴스를 받아 renderInline() 호출)
+// ─────────────────────────────────────────────────────────────────────────────
 
-	if (isBg) {
-		// Background images are handled at slide level, return placeholder
-		return `<!-- bg:${url}:${alt} -->`;
-	}
-
-	// Inline image with optional size / filter
-	let style = '';
-	const width = alt.match(/(?:width:|w:)(\S+)/);
-	const height = alt.match(/(?:height:|h:)(\S+)/);
-	if (width) style += `width:${width[1]};`;
-	if (height) style += `height:${height[1]};`;
-
-	// CSS filter keywords
-	const filterMap: Record<string, string> = {
-		blur: 'blur',
-		brightness: 'brightness',
-		contrast: 'contrast',
-		grayscale: 'grayscale',
-		'hue-rotate': 'hue-rotate',
-		invert: 'invert',
-		opacity: 'opacity',
-		saturate: 'saturate',
-		sepia: 'sepia',
-		'drop-shadow': 'drop-shadow'
-	};
-	const filters: string[] = [];
-	for (const [kw, fn] of Object.entries(filterMap)) {
-		const m = alt.match(new RegExp(`${kw}(?::([\\S]+))?`));
-		if (m) {
-			filters.push(m[1] ? `${fn}(${m[1]})` : `${fn}(1)`);
-		}
-	}
-	if (filters.length > 0) style += `filter:${filters.join(' ')};`;
-
-	const cleanAlt = alt
-		.replace(/(?:width:|w:|height:|h:)\S+/g, '')
-		.replace(
-			/(?:blur|brightness|contrast|grayscale|hue-rotate|invert|opacity|saturate|sepia|drop-shadow)(?::\S+)?/g,
-			''
-		)
-		.trim();
-
-	return `<img src="${escapeHtml(url)}" alt="${escapeHtml(cleanAlt)}"${style ? ` style="${style}"` : ''}>`;
+function renderInline(text: string, md: MarkdownIt): string {
+	return md.renderInline(text);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Math content encoder/decoder
 //
-// renderBlocks 호출 전에 수식 내부 문자를 hex 인코딩으로 보호한다.
+// md.render() 호출 전에 수식 내부 문자를 hex 인코딩으로 보호한다.
 // 인라인:  $...$   →  $hex-encoded$
 // 블록:    $$...$$ →  $$hex-encoded$$
 //
@@ -361,21 +446,21 @@ function renderImage(alt: string, url: string): string {
 //   예) $$a\nb$$ →  $$00610a0062$$  (0a = LF)
 //
 // 이렇게 하면 수식 내부의 개행, 마커 문자('-', '*' 등), 들여쓰기가
-// 마크다운 파서에 영향을 주지 않는다.
+// markdown-it 파서에 영향을 주지 않는다.
 // ─────────────────────────────────────────────────────────────────────────────
 
 function encodeMathContent(markdown: string): string {
 	// 블록 수식 $$...$$ 를 먼저 처리 (인라인보다 우선)
 	let result = markdown.replace(/([ \t]*)\$\$([\s\S]*?)\$\$/g, (_, leading, inner) => {
-		const encoded = Array.from(inner)
-			.map((ch) => ch.codePointAt(0)!.toString(16).padStart(4, '0'))
+		const encoded = Array.from(inner as string)
+			.map((ch: string) => ch.codePointAt(0)!.toString(16).padStart(4, '0'))
 			.join('');
 		return `${leading}$$${encoded}$$`;
 	});
 	// 인라인 수식 $...$ (줄 내에서만, 이미 인코딩된 $$...$$는 건드리지 않음)
 	result = result.replace(/(?<!\$)\$(?!\$)([^$\n]+?)(?<!\$)\$(?!\$)/g, (_, inner) => {
-		const encoded = Array.from(inner)
-			.map((ch) => ch.codePointAt(0)!.toString(16).padStart(4, '0'))
+		const encoded = Array.from(inner as string)
+			.map((ch: string) => ch.codePointAt(0)!.toString(16).padStart(4, '0'))
 			.join('');
 		return `$${encoded}$`;
 	});
@@ -402,316 +487,6 @@ function decodeMathContent(html: string): string {
 		return `$${inner}$`;
 	});
 	return result;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Block-level Markdown renderer
-// ─────────────────────────────────────────────────────────────────────────────
-
-function renderBlocks(markdown: string, allowHtml: boolean): string {
-	const lines = markdown.split('\n');
-	const output: string[] = [];
-	let i = 0;
-
-	while (i < lines.length) {
-		const line = lines[i];
-
-		// ── Fenced code block
-		if (/^```/.test(line)) {
-			const lang = line.slice(3).trim();
-			const codeLines: string[] = [];
-			i++;
-			while (i < lines.length && !/^```/.test(lines[i])) {
-				codeLines.push(lines[i]);
-				i++;
-			}
-			i++; // closing ```
-			const langClass = lang ? ` class="language-${escapeHtml(lang)}"` : '';
-			output.push(`<pre><code${langClass}>${escapeHtml(codeLines.join('\n'))}</code></pre>`);
-			continue;
-		}
-
-		// ── Math block $$...$$
-		if (/^\$\$/.test(line)) {
-			const mathLines: string[] = [];
-			i++;
-			while (i < lines.length && !/^\$\$/.test(lines[i])) {
-				mathLines.push(lines[i]);
-				i++;
-			}
-			i++;
-			// $$ 구분자를 포함해서 원문 그대로 출력 → MathJax가 브라우저에서 처리
-			output.push(`<div class="marp-math-block">$$\n${mathLines.join('\n')}\n$$</div>`);
-			continue;
-		}
-
-		// ── <style scoped> or <style>
-		if (/^<style(\s+scoped)?\s*>/i.test(line) && allowHtml) {
-			const isScoped = /scoped/i.test(line);
-			const styleLines: string[] = [];
-			i++;
-			while (i < lines.length && !/^<\/style>/i.test(lines[i])) {
-				styleLines.push(lines[i]);
-				i++;
-			}
-			i++;
-			const tag = isScoped ? 'style data-scoped' : 'style';
-			output.push(`<${tag}>${styleLines.join('\n')}</style>`);
-			continue;
-		}
-
-		// ── HTML passthrough
-		if (allowHtml && /^<[a-zA-Z]/.test(line)) {
-			const htmlLines: string[] = [line];
-			i++;
-			while (i < lines.length && lines[i].trim() !== '') {
-				htmlLines.push(lines[i]);
-				i++;
-			}
-			output.push(htmlLines.join('\n'));
-			continue;
-		}
-
-		// ── Table
-		if (/\|/.test(line) && i + 1 < lines.length && /^\|?[\s\-:|]+\|/.test(lines[i + 1])) {
-			const headerCells = parseTableRow(line);
-			i += 2; // skip header + separator
-			const rows: string[][] = [];
-			while (i < lines.length && /\|/.test(lines[i])) {
-				rows.push(parseTableRow(lines[i]));
-				i++;
-			}
-			let tableHtml = '<table><thead><tr>';
-			headerCells.forEach((c) => {
-				tableHtml += `<th>${renderInline(c.trim(), allowHtml)}</th>`;
-			});
-			tableHtml += '</tr></thead><tbody>';
-			rows.forEach((row) => {
-				tableHtml += '<tr>';
-				row.forEach((c) => {
-					tableHtml += `<td>${renderInline(c.trim(), allowHtml)}</td>`;
-				});
-				tableHtml += '</tr>';
-			});
-			tableHtml += '</tbody></table>';
-			output.push(tableHtml);
-			continue;
-		}
-
-		// ── Blockquote
-		if (/^>/.test(line)) {
-			const bqLines: string[] = [];
-			while (i < lines.length && /^>/.test(lines[i])) {
-				bqLines.push(lines[i].replace(/^>\s?/, ''));
-				i++;
-			}
-			output.push(`<blockquote>${renderBlocks(bqLines.join('\n'), allowHtml)}</blockquote>`);
-			continue;
-		}
-
-		// ── Headings
-		const headingMatch = line.match(/^(#{1,6})\s+(.*)/);
-		if (headingMatch) {
-			const level = headingMatch[1].length;
-			let content = headingMatch[2];
-			let isFit = false;
-			if (/<!--\s*fit\s*-->/.test(content)) {
-				isFit = true;
-				content = content.replace(/<!--\s*fit\s*-->\s*/g, '').trim();
-			}
-			const inner = renderInline(content, allowHtml);
-			if (isFit) {
-				output.push(`<h${level}><span class="marp-fit-heading">${inner}</span></h${level}>`);
-			} else {
-				output.push(`<h${level}>${inner}</h${level}>`);
-			}
-			i++;
-			continue;
-		}
-
-		// ── Horizontal rule (not slide separator — those are stripped before)
-		if (/^(\*{3,}|-{3,}|_{3,})\s*$/.test(line)) {
-			output.push('<hr>');
-			i++;
-			continue;
-		}
-
-		// ── Unordered list (fragmented if `*`, normal if `-` or `+`)
-		if (/^(\*|-|\+)\s/.test(line)) {
-			const isFragment = /^\*\s/.test(line);
-			const baseIndent = line.match(/^(\s*)/)?.[1].length ?? 0;
-			const listLines: string[] = [];
-			while (i < lines.length) {
-				const cur = lines[i];
-				if (cur.trim() === '') {
-					i++;
-					continue;
-				}
-				const curIndent = cur.match(/^(\s*)/)?.[1].length ?? 0;
-				if (curIndent < baseIndent) break;
-				listLines.push(cur);
-				i++;
-			}
-			const cls = isFragment ? ' class="marp-fragment"' : '';
-			output.push(renderList(listLines, baseIndent, allowHtml, 'ul', cls));
-			continue;
-		}
-
-		// ── Ordered list (fragmented if `1)` style)
-		if (/^\d+[.)]\s/.test(line)) {
-			const isFragment = /^\d+\)\s/.test(line);
-			const baseIndent = line.match(/^(\s*)/)?.[1].length ?? 0;
-			const listLines: string[] = [];
-			while (i < lines.length) {
-				const cur = lines[i];
-				if (cur.trim() === '') {
-					i++;
-					continue;
-				}
-				const curIndent = cur.match(/^(\s*)/)?.[1].length ?? 0;
-				if (curIndent < baseIndent) break;
-				listLines.push(cur);
-				i++;
-			}
-			const cls = isFragment ? ' class="marp-fragment"' : '';
-			output.push(renderList(listLines, baseIndent, allowHtml, 'ol', cls));
-			continue;
-		}
-
-		// ── Empty line → paragraph break
-		if (line.trim() === '') {
-			i++;
-			continue;
-		}
-
-		// ── Paragraph
-		const paraLines: string[] = [];
-		while (
-			i < lines.length &&
-			lines[i].trim() !== '' &&
-			!/^(#{1,6}\s|```|\$\$|>|\*\s|-\s|\+\s|\d+[.)]\s|<style)/.test(lines[i])
-		) {
-			paraLines.push(lines[i]);
-			i++;
-		}
-		if (paraLines.length > 0) {
-			output.push(`<p>${renderInline(paraLines.join(' '), allowHtml)}</p>`);
-		}
-	}
-
-	return output.join('\n');
-}
-
-function parseTableRow(line: string): string[] {
-	return line.replace(/^\||\|$/g, '').split('|');
-}
-
-/**
- * 재귀적 중첩 리스트 렌더러
- *
- * @param lines      리스트에 속하는 줄 배열 (들여쓰기 포함)
- * @param baseIndent 현재 리스트의 기준 들여쓰기 레벨
- * @param allowHtml  HTML passthrough 허용 여부
- * @param tag        'ul' | 'ol'  — 최상위 태그
- * @param cls        최상위 태그에 추가할 class 속성 문자열 (예: ' class="marp-fragment"')
- */
-function renderList(
-	lines: string[],
-	baseIndent: number,
-	allowHtml: boolean,
-	tag: 'ul' | 'ol',
-	cls = ''
-): string {
-	const html: string[] = [];
-	html.push(`<${tag}${cls}>`);
-
-	let i = 0;
-	while (i < lines.length) {
-		const line = lines[i];
-		const indent = line.match(/^(\s*)/)?.[1].length ?? 0;
-
-		// 현재 레벨보다 깊은 들여쓰기이고 마커가 없는 줄 → 이미 부모 li에서 소비됐어야 함, skip
-		if (indent > baseIndent) {
-			i++;
-			continue;
-		}
-
-		// 현재 줄이 리스트 아이템인지 확인
-		const isUl = /^(\*|-|\+)\s/.test(line.trimStart());
-		const isOl = /^\d+[.)]\s/.test(line.trimStart());
-		if (!isUl && !isOl) {
-			i++;
-			continue;
-		}
-
-		// 아이템 텍스트 추출 (들여쓰기 + 마커 제거)
-		const itemText = line
-			.replace(/^\s*/, '')
-			.replace(/^(\*|-|\+)\s/, '')
-			.replace(/^\d+[.)]\s/, '');
-
-		// 다음 줄들 분류: baseIndent 초과인 줄을 continuation / 자식 리스트로 구분
-		// - 자식 리스트: 마커(`- `, `* `, `+ `, `숫자. `)로 시작하는 줄
-		// - continuation: 그 외 (블록 수식 포함) — <li> 텍스트에 이어 붙임
-		const continuationLines: string[] = [];
-		const childLines: string[] = [];
-		let j = i + 1;
-		while (j < lines.length) {
-			const childIndent = lines[j].match(/^(\s*)/)?.[1].length ?? 0;
-			if (lines[j].trim() === '') {
-				j++;
-				continue;
-			}
-			if (childIndent <= baseIndent) break;
-			const trimmed = lines[j].trimStart();
-			const isChildMarker = /^(\*|-|\+)\s/.test(trimmed) || /^\d+[.)]\s/.test(trimmed);
-			if (isChildMarker) {
-				// 자식 리스트 시작 → 이후는 모두 자식 리스트 줄
-				while (j < lines.length) {
-					const d2 = lines[j].match(/^(\s*)/)?.[1].length ?? 0;
-					if (lines[j].trim() === '') {
-						j++;
-						continue;
-					}
-					if (d2 <= baseIndent) break;
-					childLines.push(lines[j]);
-					j++;
-				}
-				break;
-			}
-			// continuation 줄: 원래 줄 그대로 보존 (들여쓰기 포함)
-			continuationLines.push(lines[j]);
-			j++;
-		}
-
-		// continuation 줄이 있으면 itemText 뒤에 개행으로 이어 붙임
-		const fullItemText =
-			continuationLines.length > 0
-				? itemText + '\n' + continuationLines.map((l) => l.trimStart()).join('\n')
-				: itemText;
-
-		if (childLines.length > 0) {
-			const childBaseIndent = childLines[0].match(/^(\s*)/)?.[1].length ?? baseIndent + 2;
-			const firstChild = childLines.find((l) => l.trim() !== '');
-			const childTag: 'ul' | 'ol' =
-				firstChild && /^\d+[.)]\s/.test(firstChild.trimStart()) ? 'ol' : 'ul';
-			const childIsFragment = firstChild ? /^\*\s/.test(firstChild.trimStart()) : false;
-			const childCls = childIsFragment ? ' class="marp-fragment"' : '';
-
-			html.push(
-				`<li>${renderInline(fullItemText, allowHtml)}` +
-					renderList(childLines, childBaseIndent, allowHtml, childTag, childCls) +
-					`</li>`
-			);
-		} else {
-			html.push(`<li>${renderInline(fullItemText, allowHtml)}</li>`);
-		}
-
-		i = j;
-	}
-
-	html.push(`</${tag}>`);
-	return html.join('\n');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -770,7 +545,7 @@ function parseYamlValue(raw: string): YamlScalar {
 	if (s === '' || s === 'null' || s === '~') return '';
 
 	// 따옴표 제거
-	if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("\'"))) {
+	if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
 		return s.slice(1, -1);
 	}
 
@@ -854,7 +629,7 @@ function parseFrontMatter(markdown: string): [SlideDirectives, string] {
 				blockLines.pop();
 			}
 			const blockVal = isFolded
-				? blockLines.join(' ').replace(/  /g, '\n') // folded: 개행 → 공백
+				? blockLines.join(' ').replace(/ {2}/g, '\n') // folded: 개행 → 공백
 				: blockLines.join('\n'); // literal: 개행 보존
 			applyDirective(directives, key, blockVal);
 			continue;
@@ -1019,12 +794,14 @@ function applyHeadingDivider(markdown: string, level: number | number[]): string
 
 export class MarpLite {
 	private options: Required<MarpLiteOptions>;
+	private md: MarkdownIt;
 
 	constructor(options: MarpLiteOptions = {}) {
 		this.options = {
 			html: options.html ?? false,
 			math: options.math ?? true
 		};
+		this.md = buildMd(this.options.html);
 	}
 
 	render(markdown: string): MarpLiteResult {
@@ -1119,7 +896,7 @@ export class MarpLite {
 		globalTheme: string
 	): string {
 		const d = slide.directives;
-		const allowHtml = this.options.html;
+		// const allowHtml = this.options.html;
 
 		// viewBox 크기 결정
 		const [vbW, vbH] = d.size ? sizeToViewBox(d.size) : [1280, 720];
@@ -1127,8 +904,8 @@ export class MarpLite {
 		// 수식 내부 문자를 hex 인코딩으로 보호 (마크다운 파싱 간섭 방지)
 		const encodedContent = encodeMathContent(slide.content);
 
-		// Render Markdown content to HTML
-		let innerHtml = renderBlocks(encodedContent, allowHtml);
+		// Render Markdown content to HTML (markdown-it에 위임)
+		let innerHtml = this.md.render(encodedContent);
 
 		// Extract background image placeholders
 		const [bgs, cleanedHtml] = extractBackgrounds(innerHtml);
@@ -1183,12 +960,12 @@ export class MarpLite {
 
 		// Header
 		const headerHtml = d.header
-			? `<div class="marp-header">${renderInline(d.header, allowHtml)}</div>`
+			? `<div class="marp-header">${renderInline(d.header, this.md)}</div>`
 			: '';
 
 		// Footer
 		const footerHtml = d.footer
-			? `<div class="marp-footer">${renderInline(d.footer, allowHtml)}</div>`
+			? `<div class="marp-footer">${renderInline(d.footer, this.md)}</div>`
 			: '';
 
 		// Pagination
