@@ -37,7 +37,9 @@
 				searchTopicQuery.trim() === '' ||
 				p.title.toLowerCase().includes(searchTopicQuery.toLowerCase()) ||
 				p.keyword.join(' ').toLowerCase().includes(searchTopicQuery.toLowerCase())
-		)
+		).sort((a, b) => 
+      a.title.localeCompare(b.title, undefined, { sensitivity: 'base' })
+    )
 	);
 
 	let filteredPapers = $derived(
@@ -46,7 +48,9 @@
 				searchPaperQuery.trim() === '' ||
 				p.title.toLowerCase().includes(searchPaperQuery.toLowerCase()) ||
 				p.author.toLowerCase().includes(searchPaperQuery.toLowerCase())
-		)
+		).sort((a, b) => 
+      a.title.localeCompare(b.title, undefined, { sensitivity: 'base' })
+    )
 	);
 
 	// Preview State
@@ -84,8 +88,6 @@
 
 	$effect(() => {
 		if (!renderHtml) return;
-
-		console.log(renderHtml);
 		void typesetMathJax();
 	});
 
@@ -169,6 +171,19 @@
 		return '';
 	}
 
+	function buildAr5ivUrl(url: string | undefined) {
+		if (!url) return '';
+		const regex = /arxiv\.org\/(abs|pdf)\/(\d+\.\d+(v\d+)?)/;
+		const match = url.match(regex);
+		
+		if (match) {
+			const arxivId = match[2];
+			return `https://ar5iv.labs.arxiv.org/html/${arxivId}`;
+		}
+
+		return '';
+	}
+
 	function buildPdfUrl(url: string | undefined) {
 		if (!url) return '';
 		if (url.includes('/pdf/')) return url.replace(/^http:\/\//, 'https://');
@@ -190,11 +205,20 @@
 		}
 	}
 
-	function openExternal(kind: 'arxiv' | 'pdf') {
+	function openExternal(kind: 'arxiv' | 'ar5iv' | 'pdf') {
 		if (!selectedPaper?.url) return;
-		const targetUrl =
-			kind === 'arxiv' ? buildArxivUrl(selectedPaper.url) : buildPdfUrl(selectedPaper.url);
+
+		let targetUrl;
+		
+		if (kind === 'arxiv')
+			 targetUrl = buildArxivUrl(selectedPaper.url);
+		else if (kind === 'ar5iv')
+			 targetUrl = buildAr5ivUrl(selectedPaper.url);
+		else if (kind === 'pdf')
+				buildPdfUrl(selectedPaper.url);
+
 		if (!targetUrl) return;
+		
 		window.open(targetUrl, '_blank', 'noopener,noreferrer');
 	}
 
@@ -270,6 +294,7 @@
 </script>
 
 <svelte:head>
+	<title>Research-with-AI</title>
 	<script>
 		window.MathJax = {
 			tex: {
@@ -545,6 +570,14 @@
 								onclick={() => openExternal('arxiv')}
 							>
 								arXiv
+							</button>,
+							<button
+								type="button"
+								class="toolbar-button"
+								disabled={!selectedPaper?.url}
+								onclick={() => openExternal('ar5iv')}
+							>
+								ar5iv
 							</button>
 							or
 							<button
