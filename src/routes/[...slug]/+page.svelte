@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
 	import MarkdownIt from 'markdown-it';
 	import { MarpLite } from '../marp-lite';
@@ -21,6 +22,14 @@
 		index: number;
 	};
 
+	type PaperTagEntry = {
+		raw: string;
+		updatedAt: number;
+		expiresAt: number;
+	};
+
+	type PaperTagMap = Record<string, PaperTagEntry>;
+
 	type PaperListItem =
 		| { kind: 'year'; yearLabel: string; yearValue: number | null; key: string }
 		| { kind: 'paper'; paper: Paper; key: string };
@@ -34,6 +43,8 @@
 	let mobileStage = $state<0 | 1 | 2>(0); // 0: topics, 1: papers, 2: preview
 
 	type RoutePaperMatch = { paper: Paper; type: 'summary' | 'slide' };
+	const PAPER_TAG_STORAGE_KEY = 'paper-tags-v1';
+	const PAPER_TAG_TTL_MS = 1000 * 60 * 60 * 24 * 30 * 6;
 
 	function basename(path: string): string {
 		const normalized = String(path ?? '');
@@ -45,6 +56,59 @@
 
 	function paperSlugFromFilename(filename: string): string {
 		return basename(filename).replace(/\.md$/i, '');
+	}
+
+	function buildPaperTagKey(topicId: string | undefined, paper: Paper | null): string | null {
+		if (!topicId || !paper?.summary) return null;
+		const summarySlug = paperSlugFromFilename(paper.summary);
+		return summarySlug ? `${topicId}/${summarySlug}` : null;
+	}
+
+	function parseTagList(raw: string): string[] {
+		const tags: string[] = [];
+
+		for (const part of raw.split(',')) {
+			const tag = part.trim();
+			if (!tag || tags.includes(tag)) continue;
+			tags.push(tag);
+		}
+
+		return tags;
+	}
+
+	function loadPaperTags(): PaperTagMap {
+		if (typeof window === 'undefined') return {};
+
+		try {
+			const raw = localStorage.getItem(PAPER_TAG_STORAGE_KEY);
+			if (!raw) return {};
+			const parsed = JSON.parse(raw);
+			return parsed && typeof parsed === 'object' ? parsed : {};
+		} catch {
+			return {};
+		}
+	}
+
+	function persistPaperTags(next: PaperTagMap) {
+		paperTags = next;
+
+		if (typeof window === 'undefined') return;
+
+		try {
+			if (Object.keys(next).length === 0) {
+				localStorage.removeItem(PAPER_TAG_STORAGE_KEY);
+				return;
+			}
+			localStorage.setItem(PAPER_TAG_STORAGE_KEY, JSON.stringify(next));
+		} catch {
+			// Do nothing.
+		}
+	}
+
+	function tagsForPaper(topicId: string | undefined, paper: Paper | null): string[] {
+		const key = buildPaperTagKey(topicId, paper);
+		if (!key) return [];
+		return parseTagList(paperTags[key]?.raw ?? '');
 	}
 
 	function findPaperBySlug(paperSlug: string, allPapers: Paper[]): RoutePaperMatch | null {
@@ -89,6 +153,13 @@
 	let searchPaperQuery = $state('');
 	let topicSearchInputEl = $state<HTMLInputElement | null>(null);
 	let paperSearchInputEl = $state<HTMLInputElement | null>(null);
+	let paperTags = $state<PaperTagMap>({});
+	let editingTagKey = $state<string | null>(null);
+	let tagDraft = $state('');
+	let tagInputEl = $state<HTMLInputElement | null>(null);
+	let skipTagBlurSave = $state(false);
+	let selectedPaperTagKey = $derived(buildPaperTagKey(selectedTopic?.id, selectedPaper));
+	let selectedPaperTags = $derived(tagsForPaper(selectedTopic?.id, selectedPaper));
 
 	async function openSearchPopover(kind: 'topic' | 'paper') {
 		if (kind === 'topic') {
@@ -123,6 +194,64 @@
 
 		if (kind === 'topic') showSearchTopicInput = false;
 		else showSearchPaperInput = false;
+	}
+
+	async function openTagEditor(key: string | null, initialValue: string) {
+		if (!key) return;
+		editingTagKey = key;
+		tagDraft = initialValue;
+		await tick();
+		tagInputEl?.focus();
+		tagInputEl?.select();
+	}
+
+	async function openSelectedPaperTagEditor() {
+		if (!selectedPaperTagKey) return;
+		await openTagEditor(selectedPaperTagKey, paperTags[selectedPaperTagKey]?.raw ?? '');
+	}
+
+	function cancelTagEdit() {
+		editingTagKey = null;
+		tagDraft = '';
+	}
+
+	function saveTagEditOnBlur(key: string | null) {
+		if (skipTagBlurSave) {
+			skipTagBlurSave = false;
+			return;
+		}
+		saveTagEdit(key);
+	}
+
+	function saveTagEdit(key: string | null) {
+		if (!key) return;
+
+		const normalized = tagDraft.trim();
+		if (!normalized) {
+			const { [key]: _removed, ...rest } = paperTags;
+			persistPaperTags(rest);
+			cancelTagEdit();
+			return;
+		}
+
+		const parsedTags = parseTagList(normalized);
+		if (parsedTags.length === 0) {
+			const { [key]: _removed, ...rest } = paperTags;
+			persistPaperTags(rest);
+			cancelTagEdit();
+			return;
+		}
+
+		const now = Date.now();
+		persistPaperTags({
+			...paperTags,
+			[key]: {
+				raw: parsedTags.join(', '),
+				updatedAt: now,
+				expiresAt: now + PAPER_TAG_TTL_MS
+			}
+		});
+		cancelTagEdit();
 	}
 
 	async function clearSearchQuery(kind: 'topic' | 'paper') {
@@ -331,6 +460,7 @@
 			try {
 				const saved = localStorage.getItem('app-theme');
 				if (saved === 'dark' || saved === 'light') theme = saved;
+				paperTags = loadPaperTags();
 			} catch {
 				// Do nothing.
 			}
@@ -356,9 +486,20 @@
 	});
 
 	$effect(() => {
+		if (!selectedPaperTagKey) {
+			editingTagKey = null;
+			tagDraft = '';
+			return;
+		}
+		if (editingTagKey === selectedPaperTagKey) return;
+		editingTagKey = null;
+		tagDraft = '';
+	});
+
+	$effect(() => {
 		// Disallow more than /{topic}/{paper}.
 		if (routeHasExtra) {
-			void goto('/', { replaceState: true, noScroll: true, keepFocus: true });
+			void goto(resolve('/'), { replaceState: true, noScroll: true, keepFocus: true });
 			return;
 		}
 
@@ -390,7 +531,7 @@
 
 			const topic = topics.find((t) => t.id === topicId) ?? null;
 			if (!topic) {
-				void goto('/', { replaceState: true, noScroll: true, keepFocus: true });
+				void goto(resolve('/'), { replaceState: true, noScroll: true, keepFocus: true });
 				return;
 			}
 
@@ -410,7 +551,7 @@
 
 			const match = findPaperBySlug(paperSlug, papers);
 			if (!match) {
-				void goto(`/${topic.id}`, { replaceState: true, noScroll: true, keepFocus: true });
+				void goto(resolve(`/${topic.id}`), { replaceState: true, noScroll: true, keepFocus: true });
 				return;
 			}
 
@@ -541,7 +682,7 @@
 
 		if (syncUrl) {
 			appliedRouteKey = `${topic.id}/`;
-			void goto(`/${topic.id}`, { noScroll: true, keepFocus: true });
+			void goto(resolve(`/${topic.id}`), { noScroll: true, keepFocus: true });
 		}
 
 		try {
@@ -592,7 +733,7 @@
 		if (syncUrl) {
 			const slug = paperSlugFromFilename(filename);
 			appliedRouteKey = `${selectedTopic.id}/${slug}`;
-			void goto(`/${selectedTopic.id}/${slug}`, { noScroll: true, keepFocus: true });
+			void goto(resolve(`/${selectedTopic.id}/${slug}`), { noScroll: true, keepFocus: true });
 		}
 
 		try {
@@ -809,6 +950,13 @@
 					>
 						<p class="title">{item.paper.title}</p>
 						<p class="meta">{item.paper.author} ({item.paper.year})</p>
+						{#if tagsForPaper(selectedTopic?.id, item.paper).length > 0}
+							<div class="paper-tag-list" aria-label="Paper tags">
+								{#each tagsForPaper(selectedTopic?.id, item.paper) as tag (tag)}
+									<span class="tag-bubble">{tag}</span>
+								{/each}
+							</div>
+						{/if}
 					</button>
 				{/if}
 			{/each}
@@ -828,6 +976,7 @@
 			<div class="preview-toolbar">
 				{#if isMobile}
 					<button
+						id="preview-toolbar-back-papers"
 						type="button"
 						class="nav-back"
 						aria-label="Back to papers"
@@ -838,6 +987,40 @@
 					</button>
 				{/if}
 				<button
+					id="preview-toolbar-toggle-topics"
+					type="button"
+					class="toolbar-button"
+					title="Toggle topics"
+					aria-pressed={!showTopicPanel}
+					onclick={() => (showTopicPanel = !showTopicPanel)}
+				>
+					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 576 512"
+						><path
+							fill="currentColor"
+							d="M97.5 400l50-160 379.4 0-50 160-379.4 0zm190.7 48L477 448c21 0 39.6-13.6 45.8-33.7l50-160c9.7-30.9-13.4-62.3-45.8-62.3l-379.4 0c-21 0-39.6 13.6-45.8 33.7L80.2 294.4 80.2 96c0-8.8 7.2-16 16-16l138.7 0c3.5 0 6.8 1.1 9.6 3.2L282.9 112c13.8 10.4 30.7 16 48 16l117.3 0c8.8 0 16 7.2 16 16l48 0c0-35.3-28.7-64-64-64L330.9 80c-6.9 0-13.7-2.2-19.2-6.4L273.3 44.8C262.2 36.5 248.8 32 234.9 32L96.2 32c-35.3 0-64 28.7-64 64l0 288c0 35.3 28.7 64 64 64l192 0z"
+						/></svg
+					>
+				</button>
+				<button
+					id="preview-toolbar-toggle-papers"
+					type="button"
+					class="toolbar-button"
+					title="Toggle papers"
+					aria-pressed={!showPaperPanel}
+					onclick={() => (showPaperPanel = !showPaperPanel)}
+				>
+					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 512 512"
+						><path
+							fill="currentColor"
+							d="M40 48C26.7 48 16 58.7 16 72l0 48c0 13.3 10.7 24 24 24l48 0c13.3 0 24-10.7 24-24l0-48c0-13.3-10.7-24-24-24L40 48zM192 64c-17.7 0-32 14.3-32 32s14.3 32 32 32l288 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L192 64zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32l288 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-288 0zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32l288 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-288 0zM16 232l0 48c0 13.3 10.7 24 24 24l48 0c13.3 0 24-10.7 24-24l0-48c0-13.3-10.7-24-24-24l-48 0c-13.3 0-24 10.7-24 24zM40 368c-13.3 0-24 10.7-24 24l0 48c0 13.3 10.7 24 24 24l48 0c13.3 0 24-10.7 24-24l0-48c0-13.3-10.7-24-24-24l-48 0z"
+						/></svg
+					>
+				</button>
+				{#if !isMobile}
+					<span class="preview-toolbar-splitter" aria-hidden="true"></span>
+				{/if}
+				<button
+					id="preview-toolbar-view-report"
 					type="button"
 					class="toolbar-button"
 					title="View report"
@@ -854,6 +1037,7 @@
 					>
 				</button>
 				<button
+					id="preview-toolbar-view-presentation"
 					type="button"
 					class="toolbar-button"
 					title="View presentation"
@@ -869,63 +1053,94 @@
 					>
 				</button>
 				<button
+					id="preview-toolbar-open-arxiv"
 					type="button"
 					class="toolbar-button"
+					title="Open arXiv page"
+					aria-label="Open arXiv page"
 					disabled={!selectedPaper?.url}
 					onclick={() => openExternal('arxiv')}
 				>
 					arXiv
 				</button>
 				<button
+					id="preview-toolbar-open-pdf"
 					type="button"
 					class="toolbar-button"
+					title="Open PDF"
+					aria-label="Open PDF"
 					disabled={!selectedPaper?.url}
 					onclick={() => openExternal('pdf')}
 				>
 					PDF
-				</button>
-				<button
-					type="button"
-					class="toolbar-button"
-					title="Toggle topics"
-					aria-pressed={!showTopicPanel}
-					onclick={() => (showTopicPanel = !showTopicPanel)}
-				>
-					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 576 512"
-						><path
-							fill="currentColor"
-							d="M97.5 400l50-160 379.4 0-50 160-379.4 0zm190.7 48L477 448c21 0 39.6-13.6 45.8-33.7l50-160c9.7-30.9-13.4-62.3-45.8-62.3l-379.4 0c-21 0-39.6 13.6-45.8 33.7L80.2 294.4 80.2 96c0-8.8 7.2-16 16-16l138.7 0c3.5 0 6.8 1.1 9.6 3.2L282.9 112c13.8 10.4 30.7 16 48 16l117.3 0c8.8 0 16 7.2 16 16l48 0c0-35.3-28.7-64-64-64L330.9 80c-6.9 0-13.7-2.2-19.2-6.4L273.3 44.8C262.2 36.5 248.8 32 234.9 32L96.2 32c-35.3 0-64 28.7-64 64l0 288c0 35.3 28.7 64 64 64l192 0z"
-						/></svg
-					>
-				</button>
-				<button
-					type="button"
-					class="toolbar-button"
-					title="Toggle papers"
-					aria-pressed={!showPaperPanel}
-					onclick={() => (showPaperPanel = !showPaperPanel)}
-				>
-					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 512 512"
-						><path
-							fill="currentColor"
-							d="M40 48C26.7 48 16 58.7 16 72l0 48c0 13.3 10.7 24 24 24l48 0c13.3 0 24-10.7 24-24l0-48c0-13.3-10.7-24-24-24L40 48zM192 64c-17.7 0-32 14.3-32 32s14.3 32 32 32l288 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L192 64zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32l288 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-288 0zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32l288 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-288 0zM16 232l0 48c0 13.3 10.7 24 24 24l48 0c13.3 0 24-10.7 24-24l0-48c0-13.3-10.7-24-24-24l-48 0c-13.3 0-24 10.7-24 24zM40 368c-13.3 0-24 10.7-24 24l0 48c0 13.3 10.7 24 24 24l48 0c13.3 0 24-10.7 24-24l0-48c0-13.3-10.7-24-24-24l-48 0z"
-						/></svg
-					>
 				</button>
 				<select class="theme-select" bind:value={theme} title="Select theme" aria-label="Select theme">
 					<option value="light">☀ Light</option>
 					<option value="dark">◑ Dark</option>
 				</select>
 				<button
+					id="preview-toolbar-reader-mode"
 					type="button"
 					class="toolbar-button"
-					title="Reader mode"
+					title="Toggle reader mode"
+					aria-label="Toggle reader mode"
 					aria-pressed={readerMode}
 					disabled={!canReader}
 					onclick={() => (readerMode = !readerMode)}
 				>
 					Reader
 				</button>
+				{#if renderType === 'summary'}
+					<span class="preview-toolbar-splitter" aria-hidden="true"></span>
+					<div class="summary-tag-panel">
+						<div class="summary-tag-panel-inner">
+							{#if editingTagKey === selectedPaperTagKey}
+								<div class="tag-editor-row">
+									<input
+										class="tag-editor-input"
+										type="text"
+										maxlength="29"
+										placeholder="태그1, 태그2"
+										bind:value={tagDraft}
+										bind:this={tagInputEl}
+										onkeydown={(event) => {
+											if (event.key === 'Enter') {
+												event.preventDefault();
+												skipTagBlurSave = true;
+												saveTagEdit(selectedPaperTagKey);
+											} else if (event.key === 'Escape') {
+												event.preventDefault();
+												skipTagBlurSave = true;
+												cancelTagEdit();
+											}
+										}}
+										onblur={() => saveTagEditOnBlur(selectedPaperTagKey)}
+									/>
+								</div>
+							{:else if selectedPaperTags.length > 0}
+								<div class="tag-bubble-list">
+									{#each selectedPaperTags as tag (tag)}
+										<button
+											type="button"
+											class="tag-bubble editable"
+											onclick={() => openSelectedPaperTagEditor()}
+										>
+											{tag}
+										</button>
+									{/each}
+								</div>
+							{:else}
+								<button
+									type="button"
+									class="tag-add-button"
+									onclick={() => openSelectedPaperTagEditor()}
+								>
+									+태그
+								</button>
+							{/if}
+						</div>
+					</div>
+				{/if}
 				{#if renderType === 'slide'}
 					<label
 						class="slide-width-control"
@@ -1090,6 +1305,8 @@
 		--accent-dim: #7b8de0;
 		--accent-subtle: rgba(76, 95, 213, 0.1);
 		--accent-text: #3347b8;
+		--paper-tag-bg: #ffe082;
+		--paper-tag-text: #5f4200;
 
 		/* Paper tone colors */
 		--tone-gray-fg: #7a849e;
@@ -1147,6 +1364,8 @@
 		--accent-dim: #3d4a9e;
 		--accent-subtle: rgba(100, 116, 240, 0.12);
 		--accent-text: #a8b4ff;
+		--paper-tag-bg: #5e4300;
+		--paper-tag-text: #ffd86b;
 
 		--tone-gray-fg: #6b7a9e;
 		--tone-gray-bar: #3a415a;
@@ -1484,13 +1703,107 @@
 		color: var(--text-muted);
 		overflow: hidden;
 		display: -webkit-box;
+		line-clamp: 3;
   	-webkit-box-orient: vertical;
   	-webkit-line-clamp: 3;
+	}
+
+	.paper-tag-list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+		margin-top: 0.45rem;
+	}
+
+	.paper-tag-list .tag-bubble {
+		border-color: transparent;
+		background: var(--paper-tag-bg);
+		color: var(--paper-tag-text);
+		padding: 0.2rem 0.55rem;
+		font-weight: 700;
+	}
+
+	.summary-tag-panel {
+		display: inline-flex;
+		align-items: center;
+		min-height: 28px;
+		max-width: min(100%, 28rem);
+	}
+
+	.summary-tag-panel-inner {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+
+	.tag-editor-row {
+		width: 100%;
+		max-width: 100%;
+	}
+
+	.tag-editor-input {
+		width: min(100%, 16rem);
+		padding: 0.2rem 0.8rem;
+		border: 1px solid var(--border-default);
+		border-radius: 999px;
+		background: var(--bg-panel-alt);
+		color: var(--text-primary);
+		font: inherit;
+		min-height: 20px;
+	}
+
+	.tag-editor-input:focus {
+		outline: none;
+		border-color: var(--accent);
+		box-shadow: 0 0 0 2px var(--accent-subtle);
+	}
+
+	.tag-add-button,
+	.tag-bubble {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		  /* min-height: 1.9rem; */
+		padding: 0.1rem 0.4rem;
+		border-radius: 999px;
+		border: 1px solid var(--border-default);
+		background: var(--paper-tag-bg);
+		color: var(--paper-tag-text);
+		font-size: 0.6rem;
+		font-weight: 600;
+	}
+
+	.tag-bubble-list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.45rem;
+	}
+
+	.tag-add-button {
+		cursor: pointer;
+		transition:
+			background 0.15s,
+			color 0.15s,
+			border-color 0.15s;
+	}
+
+	.tag-bubble.editable {
+		cursor: pointer;
+		font-size: 0.65rem;
+	}
+
+	.tag-add-button:hover,
+	.tag-bubble.editable:hover {
+		background: var(--accent-subtle);
+		color: var(--accent-text);
+		border-color: var(--accent-dim);
 	}
 
 	.placeholder .clamp-5 {
 		overflow: hidden;
 		display: -webkit-box;
+		line-clamp: 5;
   	-webkit-box-orient: vertical;
   	-webkit-line-clamp: 5;
 	}
@@ -1552,6 +1865,13 @@
 		flex-wrap: wrap;
 		gap: 0.4rem;
 		align-items: center;
+	}
+	.preview-toolbar-splitter {
+		width: 1px;
+		height: 1.4rem;
+		background: var(--border-default);
+		opacity: 0.9;
+		flex: 0 0 auto;
 	}
 
 	.slide-width-control {
@@ -1752,6 +2072,9 @@
 	}
 	.summary-content :global(table tr:hover td) {
 		background: var(--table-row-hover);
+	}
+	.summary-content :global(p) {
+		line-height: 1.7;
 	}
 
 	.marp-slide-wrapper {
