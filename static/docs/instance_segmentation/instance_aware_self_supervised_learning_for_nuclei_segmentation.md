@@ -45,7 +45,7 @@ anchor와 positive는 비슷한 “평균 nuclei size”를 공유하고, negati
 이후 triplet loss는 다음과 같이 정의된다.
 
 $$
-\mathcal{L}_{ST}(z_a, z_p, z_n)
+\mathcal{L}\_{ST}(z_a, z_p, z_n)
 ===============================
 
 \sum \max\left(0,\ d(z_a, z_p) - d(z_a, z_n) + m_1\right)

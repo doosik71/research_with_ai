@@ -45,9 +45,9 @@ $$
 
 ### 3.2 연속 학습 목표
 
-새로운 작업 $\mathcal{T}_t$와 데이터 $\mathcal{D}_t$에 대해 손실은 두 부분으로 구성된다:
+새로운 작업 $\mathcal{T}\_t$와 데이터 $\mathcal{D}\_t$에 대해 손실은 두 부분으로 구성된다:
 
-* **작업 손실**: $\mathcal{D}_t$에 대한 최대우도(또는 대조) 손실.
+* **작업 손실**: $\mathcal{D}\_t$에 대한 최대우도(또는 대조) 손실.
 * **정규화 손실**: 이전 작업에서 얻은 **버퍼** 샘플(또는 생성 재생 분포)에 대한 에너지 증가를 벌점으로 부과.
 
 수식으로는 다음과 같다:
@@ -56,7 +56,7 @@ $$
 \mathcal{L}\_t = \underbrace{\mathbb{E}\_{x\sim\mathcal{D}\_t}[E_{\theta}(x)]}\_{\text{작업 손실}} + \lambda \underbrace{\mathbb{E}\_{x\sim\mathcal{B}\_{<t}}[\max(0, E_{\theta}(x) - m)]}\_{\text{망각 페널티}}
 $$
 
-여기서 $\mathcal{B}_{<t}$는 이전 작업의 저장 혹은 생성 샘플, $\lambda$는 두 항의 가중치, $m$는 마진이다.
+여기서 $\mathcal{B}\_{<t}$는 이전 작업의 저장 혹은 생성 샘플, $\lambda$는 두 항의 가중치, $m$는 마진이다.
 
 ### 3.3 대조 발산(Contrastive Divergence) 학습
 

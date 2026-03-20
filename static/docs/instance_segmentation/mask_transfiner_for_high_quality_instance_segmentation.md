@@ -40,7 +40,7 @@ $$
 D_l = \mathcal{O}*{\downarrow}!\left(M*{l-1} \oplus \mathcal{S}*{\uparrow}\big(\mathcal{S}*{\downarrow}(M_{l-1})\big)\right)
 $$
 
-여기서 $\oplus$는 XOR이고, $\mathcal{S}*{\downarrow}$, $\mathcal{S}*{\uparrow}$는 nearest-neighbor down/up-sampling이며, $\mathcal{O}_{\downarrow}$는 $2 \times 2$ 영역에 대한 OR 기반 downsampling입니다. 즉 원래 mask와 “축소 후 복원된 mask”가 다른 위치를 잡아내는 구조입니다. 저자들의 해석에 따르면 이런 영역은 주로 object boundary나 high-frequency region 근처에 생깁니다.
+여기서 $\oplus$는 XOR이고, $\mathcal{S}*{\downarrow}$, $\mathcal{S}*{\uparrow}$는 nearest-neighbor down/up-sampling이며, $\mathcal{O}\_{\downarrow}$는 $2 \times 2$ 영역에 대한 OR 기반 downsampling입니다. 즉 원래 mask와 “축소 후 복원된 mask”가 다른 위치를 잡아내는 구조입니다. 저자들의 해석에 따르면 이런 영역은 주로 object boundary나 high-frequency region 근처에 생깁니다.
 
 이 정의의 장점은 heuristic한 boundary detector가 아니라, **해상도 손실로 인해 정보가 실제로 사라지는 위치**를 직접 겨냥한다는 점입니다. 논문은 이 영역들이 sparse하고 비연속적으로 흩어져 있다고 설명합니다.
 

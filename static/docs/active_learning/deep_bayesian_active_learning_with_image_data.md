@@ -30,7 +30,7 @@ $$
 
 ### 3.2 MC dropout을 통한 posterior predictive 근사
 
-정확한 Bayesian posterior $p(\omega \mid \mathcal{D}_{train})$를 계산하는 것은 어렵기 때문에, 논문은 dropout 기반 variational approximation을 사용한다. 저자들이 제시한 predictive distribution은 다음과 같은 형태다.
+정확한 Bayesian posterior $p(\omega \mid \mathcal{D}\_{train})$를 계산하는 것은 어렵기 때문에, 논문은 dropout 기반 variational approximation을 사용한다. 저자들이 제시한 predictive distribution은 다음과 같은 형태다.
 
 $$
 p(y=c \mid \mathbf{x}, \mathcal{D}*{train})
@@ -48,7 +48,7 @@ $$
 
 $$
 p(y=c \mid \mathbf{x}, \mathcal{D}*{train})
-\approx \frac{1}{T} \sum*{t=1}^T p(y=c \mid \mathbf{x}, \hat{\omega}_t)
+\approx \frac{1}{T} \sum*{t=1}^T p(y=c \mid \mathbf{x}, \hat{\omega}\_t)
 $$
 
 여기서 $\hat{\omega}*t \sim q*\theta^*(\omega)$는 dropout mask가 적용된 서로 다른 샘플에 해당한다. 직관적으로는 **test time dropout을 켠 채 여러 번 예측하고 평균을 내는 것**이다. 이 과정이 epistemic uncertainty를 반영해 준다.

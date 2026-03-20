@@ -34,7 +34,7 @@ $$
 
 ### 3.2 Shared semantic space
 
-모델은 segmentation dataset $\mathcal{D}_m = {I_i, (\mathbf{c}_i, \mathbf{m}_i)}$ 와 detection dataset $\mathcal{D}_b = {I_j, (\mathbf{c}_j, \mathbf{b}_j)}$ 를 함께 사용한다. 여기서 $\mathbf{c}$ 는 이미지 내 visual concepts, $\mathbf{m}$ 은 mask, $\mathbf{b}$ 는 box다. 전체 vocabulary $\mathcal{V}={c_1,\dots,c_K}$ 를 text encoder로 인코딩해 text feature를 만들고, image encoder가 만든 visual token과 정렬한다. 이 설계는 detection과 segmentation의 label space를 하나의 의미 공간으로 묶는 역할을 한다.
+모델은 segmentation dataset $\mathcal{D}\_m = {I_i, (\mathbf{c}\_i, \mathbf{m}\_i)}$ 와 detection dataset $\mathcal{D}\_b = {I_j, (\mathbf{c}\_j, \mathbf{b}\_j)}$ 를 함께 사용한다. 여기서 $\mathbf{c}$ 는 이미지 내 visual concepts, $\mathbf{m}$ 은 mask, $\mathbf{b}$ 는 box다. 전체 vocabulary $\mathcal{V}={c_1,\dots,c_K}$ 를 text encoder로 인코딩해 text feature를 만들고, image encoder가 만든 visual token과 정렬한다. 이 설계는 detection과 segmentation의 label space를 하나의 의미 공간으로 묶는 역할을 한다.
 
 ### 3.3 Decoupled foreground/background decoding
 

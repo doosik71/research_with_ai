@@ -37,7 +37,7 @@
 논문의 핵심 첫 축은 conditional distribution이다. 이는 weak annotation이 주어진 상태에서 pseudo instance labels를 생성하는 분포다.
 
 $$
-\Pr_c(\mathbf{y}\mid \mathbf{x}, \mathbf{a}; \boldsymbol{\theta}_c)
+\Pr_c(\mathbf{y}\mid \mathbf{x}, \mathbf{a}; \boldsymbol{\theta}\_c)
 $$
 
 이 분포의 목적은 **annotation-consistent pseudo labels** 를 만들되, weak supervision의 애매함 때문에 가능한 여러 해를 모두 고려하는 것이다. 예를 들어 image-level label만 있으면 “person이 있다”는 정보는 있지만, 어떤 proposal이 진짜 person instance인지, 어디까지 foreground인지 여러 해석이 가능하다. 논문은 이 불확실성을 분포로 다룬다.
@@ -82,7 +82,7 @@ $$
 DIV_{\Delta}(\Pr_p,\Pr_c)
 =========================
 
-\frac{1}{K}\sum_{k=1}^{K}\sum_{\mathbf{y}_p^{(i)}} \Pr_p(\mathbf{y}_p^{(i)};\boldsymbol{\theta}_p),\Delta(\mathbf{y}_p^{(i)}, \mathbf{y}_c^k)
+\frac{1}{K}\sum_{k=1}^{K}\sum_{\mathbf{y}\_p^{(i)}} \Pr_p(\mathbf{y}\_p^{(i)};\boldsymbol{\theta}\_p),\Delta(\mathbf{y}\_p^{(i)}, \mathbf{y}\_c^k)
 $$
 
 그리고 conditional network의 self-diversity는
@@ -93,7 +93,7 @@ DIV_{\Delta}(\Pr_c,\Pr_c)
 
 \frac{1}{K(K-1)}
 \sum_{\substack{k,k'=1\k'\neq k}}^K
-\Delta(\mathbf{y}_c^k,\mathbf{y}_c^{k'})
+\Delta(\mathbf{y}\_c^k,\mathbf{y}\_c^{k'})
 $$
 
 처럼 정의된다. 이 self-diversity 항은 conditional network가 한 이미지에 대해 다양한 plausible pseudo labels를 내도록 유도한다.  
@@ -116,12 +116,12 @@ $$
 
 * **image-level annotations**
 
-  * $50.9%\ \mathrm{mAP}^{r}_{0.5}$
-  * $28.5%\ \mathrm{mAP}^{r}_{0.75}$
+  * $50.9%\ \mathrm{mAP}^{r}\_{0.5}$
+  * $28.5%\ \mathrm{mAP}^{r}\_{0.75}$
 
 * **bounding-box annotations**
 
-  * $32.1%\ \mathrm{mAP}^{r}_{0.75}$
+  * $32.1%\ \mathrm{mAP}^{r}\_{0.75}$
 
 그리고 abstract에서는 best baseline 대비 각각 **4.2% mAP(^r_{0.5})**, **4.8% mAP(^r_{0.75})** 향상을 강조한다. introduction에서는 bounding-box setting에서 SOTA 대비 **10% 이상** 향상이라고도 요약한다.
 

@@ -43,7 +43,7 @@ $$
 이며 여기서
 
 $$
-\hat{o}_i = C_k - x_i
+\hat{o}\_i = C_k - x_i
 $$
 
 입니다. 이 방식은 결국 “embedding이 centroid로 가야 한다”는 점별 제약만 줄 뿐, 실제 inference에서 필요한 centroid localization과 clustering은 loss 밖에 남겨 둡니다. 논문은 이것이 end-to-end instance optimization을 방해한다고 지적합니다.

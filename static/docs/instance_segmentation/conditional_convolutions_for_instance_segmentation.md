@@ -33,11 +33,11 @@ CondInst는 크게 두 부분으로 구성됩니다.
 
 detector는 **FCOS**를 기반으로 하며, FPN feature map인 ${P_3, P_4, P_5, P_6, P_7}$ 위에서 클래스, centerness, box, 그리고 controller 출력을 예측합니다. 저자들이 FCOS를 택한 이유는 구조가 단순하고 anchor-free라서 파라미터와 계산량을 줄이기 쉽기 때문입니다.
 
-한편 mask branch는 별도의 shared feature map $\mathbf{F}_{mask}$를 생성합니다. 이 feature map은 모든 instance가 공유하지만, 각 instance마다 detector가 생성한 서로 다른 동적 파라미터를 사용해 서로 다른 mask head가 적용됩니다. 즉, 입력 feature는 공유되지만, **필터가 instance마다 다릅니다**.
+한편 mask branch는 별도의 shared feature map $\mathbf{F}\_{mask}$를 생성합니다. 이 feature map은 모든 instance가 공유하지만, 각 instance마다 detector가 생성한 서로 다른 동적 파라미터를 사용해 서로 다른 mask head가 적용됩니다. 즉, 입력 feature는 공유되지만, **필터가 instance마다 다릅니다**.
 
 ### 3.2 Instance-Aware Dynamic Mask Head
 
-CondInst의 중심은 **controller sub-network**입니다. detector가 어떤 위치 $(x, y)$에서 instance를 예측하면, controller는 그 instance에 대한 mask head 파라미터 $\boldsymbol{\theta}*{x,y}$를 생성합니다. 이 파라미터는 고정된 네트워크를 쓰는 대신, 그 객체에 맞는 **조건부 네트워크**를 즉석에서 구성합니다. 논문은 Fig. 3 설명에서 classification head가 클래스 확률 $\boldsymbol{p}*{x,y}$를 예측하고, controller가 같은 위치에서 mask head 필터 파라미터 $\boldsymbol{\theta}_{x,y}$를 생성한다고 설명합니다.  
+CondInst의 중심은 **controller sub-network**입니다. detector가 어떤 위치 $(x, y)$에서 instance를 예측하면, controller는 그 instance에 대한 mask head 파라미터 $\boldsymbol{\theta}*{x,y}$를 생성합니다. 이 파라미터는 고정된 네트워크를 쓰는 대신, 그 객체에 맞는 **조건부 네트워크**를 즉석에서 구성합니다. 논문은 Fig. 3 설명에서 classification head가 클래스 확률 $\boldsymbol{p}*{x,y}$를 예측하고, controller가 같은 위치에서 mask head 필터 파라미터 $\boldsymbol{\theta}\_{x,y}$를 생성한다고 설명합니다.  
 
 이때 중요한 점은 mask head가 매우 작다는 것입니다. abstract에 따르면 예시 구성은 **3개의 convolution layer, 각 8 channels** 수준입니다. 일반적인 Mask R-CNN mask head가 여러 개의 $3\times3$, 256-channel convolution을 쓰는 것과 비교하면 매우 가볍습니다. 저자들은 이것이 가능한 이유를 “이 작은 네트워크가 모든 객체를 다 분할할 필요가 없고, 단 하나의 target instance만 예측하면 되기 때문”이라고 설명합니다. 즉, 학습 난도가 크게 낮아집니다.  
 

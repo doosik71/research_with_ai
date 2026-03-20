@@ -83,10 +83,10 @@ $$
 \mathbb{E}*{\mathbf{x}\sim p*{data}(\mathbf{x})}
 \left[
 \rho \cdot
-\mathbb{E}_{\tilde{\mathbf{x}}\sim p_g(\tilde{\mathbf{x}}|\mathbf{x})}
+\mathbb{E}\_{\tilde{\mathbf{x}}\sim p_g(\tilde{\mathbf{x}}|\mathbf{x})}
 [-\log D(\tilde{\mathbf{x}})]
 +
-(1-\rho)\cdot |\bar{\mathbf{x}}-\mathbf{x}|_2^2
+(1-\rho)\cdot |\bar{\mathbf{x}}-\mathbf{x}|\_2^2
 \right]
 $$
 

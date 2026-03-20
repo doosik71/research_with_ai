@@ -72,7 +72,7 @@ $$
 즉, detection마다 최종적으로
 
 $$
-\mathbf{a}_d \in \mathbb{R}^{K \times M \times M}
+\mathbf{a}\_d \in \mathbb{R}^{K \times M \times M}
 $$
 
 형태의 attention을 얻게 됩니다. 여기서 $M \times M$은 coarse attention resolution입니다. 저자들은 이 attention이 object의 **대략적인 shape, pose, instance-level layout**를 담는다고 설명합니다.

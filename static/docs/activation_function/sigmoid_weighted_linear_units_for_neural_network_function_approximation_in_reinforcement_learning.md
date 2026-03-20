@@ -26,12 +26,12 @@
 파라미터 업데이트는 일반적인 eligibility trace 기반 gradient descent 형태다.
 
 $$
-\boldsymbol{\theta}_{t+1}
+\boldsymbol{\theta}\_{t+1}
 =========================
 
-\boldsymbol{\theta}_t
+\boldsymbol{\theta}\_t
 +
-\alpha \delta_t \boldsymbol{e}_t
+\alpha \delta_t \boldsymbol{e}\_t
 $$
 
 TD($\lambda$)에서 TD error는

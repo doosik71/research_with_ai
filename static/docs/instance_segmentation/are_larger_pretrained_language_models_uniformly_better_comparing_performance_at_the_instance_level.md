@@ -52,7 +52,7 @@ $$
 
 그래서 논문은 각 instance에 대해 seed 평균 정확도인 instance accuracy를 정의한다. 그리고 두 모델 크기 $s_1, s_2$ 사이의 차이를
 $$
-{}^{s_1}_{s_2}\Delta \mathrm{Acc}_i := \mathrm{Acc}_i^{s_2} - \mathrm{Acc}_i^{s_1}
+{}^{s_1}\_{s_2}\Delta \mathrm{Acc}\_i := \mathrm{Acc}\_i^{s_2} - \mathrm{Acc}\_i^{s_1}
 $$
 로 본다. 이 값이 음수이면, larger model이 smaller model보다 그 instance를 덜 자주 맞힌다는 뜻이다. 이런 negative tail이 바로 **decaying instances**의 신호다.
 

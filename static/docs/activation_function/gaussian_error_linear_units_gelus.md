@@ -44,7 +44,7 @@ $$
 
 논문은 GELU를 단순한 smooth activation으로 소개하는 데 그치지 않고, **Adaptive Dropout의 기대값** 으로 해석한다. 구체적으로 입력 $x$ 를 Bernoulli mask로 살리거나 죽이되, 그 mask probability를 $\Phi(x)$ 로 두면 activation의 출력 기대값은 $x\Phi(x)$ 가 된다. 이 때문에 GELU는 stochastic regularization과 activation을 분리된 두 요소로 보기보다, 하나의 연속적 관점에서 이해하게 만든다.  
 
-이 해석은 ReLU와의 차이를 더 분명히 보여 준다. ReLU는 사실상 $x\mathbf{1}_{x>0}$ 로 쓸 수 있어 sign-based gating이다. 반면 GELU는 입력이 얼마나 “유의미하게 큰지”에 따라 통과 비율이 달라진다. 그래서 작은 양수도 무조건 살리지 않고, 약한 음수도 완전히 버리지 않는다. 이는 noisy feature나 애매한 intermediate representation을 다룰 때 더 부드러운 inductive bias를 제공한다는 의미로 읽을 수 있다.
+이 해석은 ReLU와의 차이를 더 분명히 보여 준다. ReLU는 사실상 $x\mathbf{1}\_{x>0}$ 로 쓸 수 있어 sign-based gating이다. 반면 GELU는 입력이 얼마나 “유의미하게 큰지”에 따라 통과 비율이 달라진다. 그래서 작은 양수도 무조건 살리지 않고, 약한 음수도 완전히 버리지 않는다. 이는 noisy feature나 애매한 intermediate representation을 다룰 때 더 부드러운 inductive bias를 제공한다는 의미로 읽을 수 있다.
 
 ### 3.3 근사식
 

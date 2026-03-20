@@ -34,20 +34,20 @@ GICN은 세 개의 subnet으로 구성된다.
 2. **Bounding-Box Prediction Network** $\Phi_B$
 3. **Mask Prediction Network** $\Phi_M$  
 
-입력 point cloud에서 global/local feature를 추출한 뒤, 먼저 center prediction network가 각 point가 object center일 확률을 예측해 heatmap $Q={Q_i}_{i=1}^N$를 만든다. 그다음 center selection mechanism으로 소수의 center 후보를 고르고, 각 후보 중심으로 instance size를 예측해 적절한 neighborhood를 정한다. 마지막으로 이 size-aware feature를 사용해 3D bounding box와 point-level instance mask를 출력한다.  
+입력 point cloud에서 global/local feature를 추출한 뒤, 먼저 center prediction network가 각 point가 object center일 확률을 예측해 heatmap $Q={Q_i}\_{i=1}^N$를 만든다. 그다음 center selection mechanism으로 소수의 center 후보를 고르고, 각 후보 중심으로 instance size를 예측해 적절한 neighborhood를 정한다. 마지막으로 이 size-aware feature를 사용해 3D bounding box와 point-level instance mask를 출력한다.  
 
 ### 3.2 Center Prediction Network
 
 입력 point cloud를
 
 $$
-\mathcal{P}={p_i=(x_i,y_i,z_i)}_{i=1}^{N}
+\mathcal{P}={p_i=(x_i,y_i,z_i)}\_{i=1}^{N}
 $$
 
 라고 하자. $\Phi_C$는 각 point $p_i$가 어떤 3D object instance의 center일 확률을 예측한다. backbone은 **PointNet++** 이며, global feature와 point-wise feature를 추출한 뒤, 여기에 추가 fully connected layers를 붙여 최종적으로 sigmoid를 거친 point-wise 확률값을 만든다. heatmap은
 
 $$
-Q={Q_i}_{i=1}^{N}, \quad Q_i \in [0,1]
+Q={Q_i}\_{i=1}^{N}, \quad Q_i \in [0,1]
 $$
 
 형태다.

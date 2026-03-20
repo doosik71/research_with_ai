@@ -70,7 +70,7 @@ MetaGPT는 agent 간 직접 1:1로 계속 묻고 답하는 대신, 전역 **mess
 논문에서 명시적으로 제시한 핵심 수식은 Pass@k 평가식이다.
 
 $$
-\operatorname{Pass}@k=\mathbb{E}_{\text{Problems}}\left[1-\frac{\binom{n-c}{k}}{\binom{n}{k}}\right]
+\operatorname{Pass}@k=\mathbb{E}\_{\text{Problems}}\left[1-\frac{\binom{n-c}{k}}{\binom{n}{k}}\right]
 $$
 
 여기서 $n$은 생성한 전체 후보 수, $c$는 그중 정답 코드 수, $k$는 상위 $k$개를 선택하는 경우를 뜻한다. 직관적으로는 “생성된 후보 중 적어도 하나가 정답일 확률”의 기대값이다. 이 논문은 주로 Pass@1을 강조하며, 한 번의 생성만으로 정답을 맞히는 비율을 보고한다. 즉, MetaGPT의 목적은 단순히 여러 후보 중 하나가 맞는 시스템이 아니라, **처음부터 더 일관되고 실행 가능한 코드를 생성하는 것**에 가깝다.

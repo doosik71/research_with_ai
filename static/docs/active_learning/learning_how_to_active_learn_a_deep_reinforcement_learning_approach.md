@@ -24,7 +24,7 @@ PAL의 novelty는 두 층위에 있다. 첫째, active learning policy를 **deep
 
 상태 표현은 논문에서 매우 중요한 부분이다. 저자들은 state를 continuous vector로 만들기 위해 세 가지 정보를 결합한다.
 
-첫째, **문장 내용(content representation)** 이다. 문장 $\mathbf{x}_i$ 는 CNN 기반 sentence encoder로 고정 길이 벡터로 변환된다. 이 부분은 Kim (2014) 스타일의 wide convolution과 max-pooling 구조를 따른다. 둘째, supervised model의 **predictive marginals** 를 직접 사용한다. 저자들은 entropy 같은 요약 통계만 쓰기보다, 예측 분포 자체를 넣는 편이 더 일반적이고 풍부한 신호를 줄 수 있다고 본다. 셋째, 모델의 **confidence 정보** 를 함께 넣는다. 이렇게 해서 policy network는 문장 의미와 현재 모델의 불확실성/예측 패턴을 동시에 볼 수 있다.
+첫째, **문장 내용(content representation)** 이다. 문장 $\mathbf{x}\_i$ 는 CNN 기반 sentence encoder로 고정 길이 벡터로 변환된다. 이 부분은 Kim (2014) 스타일의 wide convolution과 max-pooling 구조를 따른다. 둘째, supervised model의 **predictive marginals** 를 직접 사용한다. 저자들은 entropy 같은 요약 통계만 쓰기보다, 예측 분포 자체를 넣는 편이 더 일반적이고 풍부한 신호를 줄 수 있다고 본다. 셋째, 모델의 **confidence 정보** 를 함께 넣는다. 이렇게 해서 policy network는 문장 의미와 현재 모델의 불확실성/예측 패턴을 동시에 볼 수 있다.
 
 이 설계는 논문의 핵심 의도와 맞닿아 있다. 즉, 기존 active learning이 주로 uncertainty라는 단일 heuristic에 의존했다면, PAL은 문장 내용과 예측 분포의 구조까지 함께 보면서 더 복합적인 selection policy를 학습한다는 것이다.
 

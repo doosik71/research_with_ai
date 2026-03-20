@@ -34,7 +34,7 @@ Zero-shot Detector는 proposal visual feature를 semantic word-vector 공간과 
 
 ### 3.4 Semantic Mask Head (SMH)
 
-SMH는 논문의 segmentation 핵심입니다. 이 모듈도 encoder-decoder 구조이며, 학습 중에는 encoder가 visual feature를 semantic word-vector로 인코딩하고, decoder가 다시 visual feature를 복원하도록 하여 reconstruction loss $\mathcal{L}_R$를 사용합니다. 테스트 때는 decoder를 제거하고 encoder만 사용합니다. 이후 seen/unseen word-vector를 고정 convolution처럼 사용해 **pixel-by-pixel convolution**을 수행함으로써 seen과 unseen class의 instance segmentation 결과를 얻습니다. 즉 mask prediction을 semantic space에서 수행하는 구조입니다.
+SMH는 논문의 segmentation 핵심입니다. 이 모듈도 encoder-decoder 구조이며, 학습 중에는 encoder가 visual feature를 semantic word-vector로 인코딩하고, decoder가 다시 visual feature를 복원하도록 하여 reconstruction loss $\mathcal{L}\_R$를 사용합니다. 테스트 때는 decoder를 제거하고 encoder만 사용합니다. 이후 seen/unseen word-vector를 고정 convolution처럼 사용해 **pixel-by-pixel convolution**을 수행함으로써 seen과 unseen class의 instance segmentation 결과를 얻습니다. 즉 mask prediction을 semantic space에서 수행하는 구조입니다.
 
 이 설계의 장점은 명확합니다. unseen class mask head를 직접 학습하는 대신, seen class에서 배운 visual-semantic alignment를 mask prediction으로 전이할 수 있기 때문입니다. 다만 논문이 제시한 방식은 semantic word-vector 품질에 강하게 의존합니다. 이 점은 뒤 실험에서도 확인됩니다.
 

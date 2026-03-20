@@ -56,7 +56,7 @@
 
 **Denoising Autoencoder (DAE)** 는 입력을 일부러 오염시킨 뒤 원래 clean input을 복원하도록 학습한다. 이렇게 하면 trivial identity mapping을 피하고, 노이즈에 강한 표현을 얻을 수 있다. 논문은 corrupted input을 hidden representation으로 보낸 뒤 reconstruction loss를 clean input 기준으로 최소화한다고 설명한다. stacked denoising autoencoder(SDAE)는 이 아이디어를 deep network로 확장한 것이다.
 
-**Sparse Autoencoder** 는 hidden unit가 대부분 비활성 상태를 유지하도록 sparsity constraint를 추가한 모델이다. 논문은 hidden neuron 평균 활성도를 낮게 유지하도록 Kullback-Leibler divergence penalty를 cost function에 넣는 방식을 설명한다. 이는 과적합을 줄이고 복잡도를 제어하는 regularization 역할도 한다. 수식적으로는 hidden activation 평균을 $\hat{\rho}_j$로 두고, 목표 sparsity $\rho$와의 KL divergence를 페널티로 더한다.
+**Sparse Autoencoder** 는 hidden unit가 대부분 비활성 상태를 유지하도록 sparsity constraint를 추가한 모델이다. 논문은 hidden neuron 평균 활성도를 낮게 유지하도록 Kullback-Leibler divergence penalty를 cost function에 넣는 방식을 설명한다. 이는 과적합을 줄이고 복잡도를 제어하는 regularization 역할도 한다. 수식적으로는 hidden activation 평균을 $\hat{\rho}\_j$로 두고, 목표 sparsity $\rho$와의 KL divergence를 페널티로 더한다.
 
 **Convolutional Autoencoder (CAE)** 는 fully connected 구조 대신 convolution/deconvolution을 사용해 이미지의 지역 구조를 보존하면서 특징을 학습한다. 논문은 stacked AE의 layer-wise pretraining 부담을 줄이고, image local structure를 더 잘 반영할 수 있다는 점을 강조한다. 의료영상에서는 fMRI modeling, AD/MCI/HC classification, nucleus detection 등에 적용 사례가 제시된다.
 
@@ -94,7 +94,7 @@ $$
 
 \mathbb{E}*{x \sim p*{data}}[\log D(x)]
 +
-\mathbb{E}_{z \sim p_z}[\log(1-D(G(z)))]
+\mathbb{E}\_{z \sim p_z}[\log(1-D(G(z)))]
 $$
 
 이 구조는 두 네트워크가 적대적으로 경쟁하면서 generator가 점점 더 realistic sample을 생성하도록 학습된다고 설명된다.
