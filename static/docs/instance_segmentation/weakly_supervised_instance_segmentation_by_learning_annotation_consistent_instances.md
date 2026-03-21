@@ -70,8 +70,8 @@ higher-order term의 의미가 중요하다. image-level annotation에서는 “
 논문의 가장 중요한 수식적 기여는 두 분포를 함께 묶는 학습 목적이다. 저자들은 task-specific loss $\Delta$ 를 이용해 두 분포 사이의 diversity / self-diversity를 정의하고, 이를 바탕으로 **dissimilarity coefficient** 를 최소화한다. 최종 objective는 다음처럼 주어진다.
 
 $$
-\theta_p^*, \theta_c^* = \operatorname*{arg,min}*{\theta_p,\theta_c}
-DISC*{\Delta}\left(\Pr_p(\theta_p), \Pr_c(\theta_c)\right)
+\theta_p^{\*}, \theta_c^{\*} = \operatorname*{arg min}_{\theta_p,\theta_c}
+DISC*{\Delta}\left(\Pr_p(\theta_p), \text{Pr}_c(\theta_c)\right)
 $$
 
 즉, conditional distribution이 샘플링하는 annotation-consistent instance와 prediction distribution이 내는 instance mask가 task-specific loss 기준으로 가까워지도록 양쪽을 동시에 조정한다.
@@ -79,20 +79,16 @@ $$
 appendix snippet에 따르면 diversity 항은 예를 들어 prediction과 conditional 사이에 대해 다음 꼴로 정의된다.
 
 $$
-DIV_{\Delta}(\Pr_p,\Pr_c)
-=========================
-
-\frac{1}{K}\sum_{k=1}^{K}\sum_{\mathbf{y}\_p^{(i)}} \Pr_p(\mathbf{y}\_p^{(i)};\boldsymbol{\theta}\_p),\Delta(\mathbf{y}\_p^{(i)}, \mathbf{y}\_c^k)
+DIV_{\Delta}(\text{Pr}\_p,\text{Pr}\_c) =
+\frac{1}{K}\sum_{k=1}^{K}\sum_{\mathbf{y}\_p^{(i)}} \text{Pr}\_p(\mathbf{y}\_p^{(i)};\mathbf{\theta}\_p),\Delta(\mathbf{y}\_p^{(i)}, \mathbf{y}\_c^k)
 $$
 
 그리고 conditional network의 self-diversity는
 
 $$
-DIV_{\Delta}(\Pr_c,\Pr_c)
-=========================
-
+DIV_{\Delta}(\text{Pr}\_c,\text{Pr}\_c) =
 \frac{1}{K(K-1)}
-\sum_{\substack{k,k'=1\k'\neq k}}^K
+\sum_{\substack{k,k'=1\\\\k'\neq k}}^K
 \Delta(\mathbf{y}\_c^k,\mathbf{y}\_c^{k'})
 $$
 
@@ -123,7 +119,7 @@ $$
 
   * $32.1%\ \mathrm{mAP}^{r}\_{0.75}$
 
-그리고 abstract에서는 best baseline 대비 각각 **4.2% mAP(^r_{0.5})**, **4.8% mAP(^r_{0.75})** 향상을 강조한다. introduction에서는 bounding-box setting에서 SOTA 대비 **10% 이상** 향상이라고도 요약한다.
+그리고 abstract에서는 best baseline 대비 각각 **4.2% mAP$^r_{0.5}$**, **4.8% mAP$^r_{0.75}$** 향상을 강조한다. introduction에서는 bounding-box setting에서 SOTA 대비 **10% 이상** 향상이라고도 요약한다.
 
 즉, 이 논문은 단지 “약간 좋아졌다”가 아니라, weakly supervised instance segmentation에서 **uncertainty-aware pseudo labeling + joint objective** 가 성능 차이로 이어진다는 것을 보여준다.
 
@@ -178,6 +174,6 @@ $$
 
 이 논문은 weakly supervised instance segmentation을 위해 **conditional distribution** 과 **prediction distribution** 을 분리해 정의하고, 둘 사이의 **dissimilarity coefficient** 를 줄이는 joint probabilistic objective를 제안한다. conditional distribution은 semantic unary, boundary-aware pairwise, annotation-aware higher-order term을 통해 annotation-consistent pseudo labels를 샘플링하고, prediction distribution은 Mask R-CNN 기반 annotation-agnostic model로 구현된다.  
 
-실험 결과, Pascal VOC 2012에서 image-level supervision으로 **50.9% mAP(^r_{0.5})**, **28.5% mAP(^r_{0.75})**, bounding-box supervision으로 **32.1% mAP(^r_{0.75})** 를 기록하며 당시 SOTA를 달성했다. 또한 ablation은 pairwise, higher-order, self-diversity가 모두 중요함을 보여준다.
+실험 결과, Pascal VOC 2012에서 image-level supervision으로 **50.9% mAP$^r_{0.5}$**, **28.5% mAP$^r_{0.75}$**, bounding-box supervision으로 **32.1% mAP$^r_{0.75}$** 를 기록하며 당시 SOTA를 달성했다. 또한 ablation은 pairwise, higher-order, self-diversity가 모두 중요함을 보여준다.
 
 이 논문은 weak supervision에서 “pseudo label 생성 → supervised 학습”이라는 단순 파이프라인을 넘어, **uncertainty-aware distribution matching** 이라는 더 일반적이고 강력한 시각을 제시했다는 점에서 의미가 크다. 후속 연구 관점에서는 proposal-free formulation, end-to-end differentiable latent mask modeling, 또는 modern instance foundation model과의 결합이 자연스러운 확장 방향이다.

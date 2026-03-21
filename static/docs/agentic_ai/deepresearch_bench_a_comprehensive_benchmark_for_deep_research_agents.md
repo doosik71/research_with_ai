@@ -57,7 +57,7 @@ $$
 Judge LLM은 모든 criterion에 대해 두 보고서의 점수 리스트를 출력한다.
 
 $$
-({s_{tgt,c}}*{c \in C_t}, {s*{ref,c}}*{c \in C_t}) = \text{JudgeLLM}(t, R*{tgt}, R_{ref}, C_t)
+({s_{tgt,c}}\_{c \in C_t}, {s*{ref,c}}\_{c \in C_t}) = \text{JudgeLLM}(t, R*{tgt}, R_{ref}, C_t)
 $$
 
 그 후 criterion 가중치와 dimension 가중치를 반영해 intermediate score를 계산하고, 최종 점수는 reference 대비 상대 점수로 정한다.

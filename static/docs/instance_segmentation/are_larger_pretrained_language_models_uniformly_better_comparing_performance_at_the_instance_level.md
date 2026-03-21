@@ -14,7 +14,7 @@
 
 첫째, 모델 비교의 기본 단위를 **overall accuracy**가 아니라 **instance accuracy**로 바꾸자는 것이다. 저자들은 한 모델 크기 $s$와 특정 instance $i$에 대해, 그 instance를 얼마나 자주 맞히는지를
 $$
-\mathrm{Acc}*i^s := \mathbb{E}*{P,F}[c_i^s]
+\mathrm{Acc}\_i^s := \mathbb{E}\_{P,F}[c_i^s]
 $$
 로 정의한다. 여기서 $P$는 pretraining seed, $F$는 finetuning seed, $c_i^s \in {0,1}$는 해당 run에서 그 instance를 맞혔는지 여부다. 즉 “이 모델은 몇 % 정확한가?”가 아니라 “**이 instance는 이 크기의 모델이 몇 % 확률로 맞히는가?**”를 보자는 것이다.  
 

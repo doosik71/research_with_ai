@@ -67,7 +67,7 @@ Implicit PointRend의 장점은 두 가지입니다.
 
 ### 4.2 Number of points
 
-COCO ablation에서 가장 중요한 관찰은 **point 수가 늘수록 성능은 빠르게 증가하지만, 수십 개 이상에서는 diminishing returns가 나타난다**는 점입니다. 특히 Mask R-CNN + ResNet-50-FPN 기준으로 $\mathcal{P}*{10}$만으로 **36.1 AP**를 달성합니다. 이는 full mask supervision의 **37.2 AP** 대비 약 **97%** 수준입니다. 또 20 points는 10 points보다 약 **0.3 AP**만 더 좋지만 annotation 시간은 2배 가까이 듭니다. 그래서 저자들은 $\mathcal{P}*{10}$을 실용적인 sweet spot으로 채택합니다.
+COCO ablation에서 가장 중요한 관찰은 **point 수가 늘수록 성능은 빠르게 증가하지만, 수십 개 이상에서는 diminishing returns가 나타난다**는 점입니다. 특히 Mask R-CNN + ResNet-50-FPN 기준으로 $\mathcal{P}\_{10}$만으로 **36.1 AP**를 달성합니다. 이는 full mask supervision의 **37.2 AP** 대비 약 **97%** 수준입니다. 또 20 points는 10 points보다 약 **0.3 AP**만 더 좋지만 annotation 시간은 2배 가까이 듭니다. 그래서 저자들은 $\mathcal{P}\_{10}$을 실용적인 sweet spot으로 채택합니다.
 
 ### 4.3 Main results across datasets
 

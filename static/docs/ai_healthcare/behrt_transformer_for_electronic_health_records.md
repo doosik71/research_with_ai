@@ -79,7 +79,7 @@ $$
 BEHRT의 각 입력 토큰 표현은 4개 embedding의 합으로 구성된다.
 
 $$
-\mathbf{e} = \mathbf{e}*{disease} + \mathbf{e}*{position} + \mathbf{e}*{age} + \mathbf{e}*{segment}
+\mathbf{e} = \mathbf{e}\_{disease} + \mathbf{e}\_{position} + \mathbf{e}\_{age} + \mathbf{e}\_{segment}
 $$
 
 논문에 이 식이 명시적으로 적혀 있지는 않지만, Figure 3 설명과 본문 서술상 실제 설계는 이 네 표현의 결합으로 이해하는 것이 정확하다.

@@ -21,13 +21,13 @@
 논문은 가장 먼저 deterministic model과 probabilistic model의 차이를 수식으로 설명한다. deterministic model은 $g_\theta(\mathbf{x})$처럼 입력 feature $\mathbf{x}$를 받아 응답 $y$의 예측값을 내놓는 함수이며, 예를 들어 squared error를 최소화하여 학습할 수 있다.
 
 $$
-\mathbb{E}*{\mathbf{x}, y \sim F}\left[\left(g*\theta(\mathbf{x}) - y\right)^2\right]
+\mathbb{E}\_{\mathbf{x}, y \sim F}\left[\left(g*\theta(\mathbf{x}) - y\right)^2\right]
 $$
 
 이 경우 잘 학습된 모델은 대체로 $y$의 기대값에 가까운 값을 준다. 하지만 응답 분포 자체는 표현하지 못한다. 반면 probabilistic model은 $p_\theta(y \mid \mathbf{x})$처럼 **조건부 확률분포 자체**를 학습하며, 로그우도를 최대화하는 식으로 학습할 수 있다.
 
 $$
-\mathbb{E}*{\mathbf{x}, y \sim F}\left[\log p*\theta(y \mid \mathbf{x})\right]
+\mathbb{E}\_{\mathbf{x}, y \sim F}\left[\log p*\theta(y \mid \mathbf{x})\right]
 $$
 
 이렇게 학습된 모델은 평균값뿐 아니라 분산과 다른 통계량까지 제공할 수 있다. 논문이 강조하는 핵심은 의료에서 바로 이 차이가 임상적 의미를 만든다는 점이다. 예측 평균이 같더라도 분산이 다르면 의사결정은 달라진다.

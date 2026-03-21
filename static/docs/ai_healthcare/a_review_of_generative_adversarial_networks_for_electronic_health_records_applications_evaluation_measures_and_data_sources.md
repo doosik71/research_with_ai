@@ -46,9 +46,9 @@ $$
 \min_G \max_D V(D,G)
 ====================
 
-\mathbb{E}*{\mathbf{x}}[\log D(\mathbf{x})]
+\mathbb{E}\_{\mathbf{x}}[\log D(\mathbf{x})]
 +
-\mathbb{E}*{\mathbf{z}}[\log(1 - D(G(\mathbf{z})))]
+\mathbb{E}\_{\mathbf{z}}[\log(1 - D(G(\mathbf{z})))]
 $$
 
 비록 ar5iv 수식 렌더링이 약간 거칠지만, 의도는 고전적 GAN objective 그대로다. discriminator는 real을 잘 구분하려 하고, generator는 discriminator를 속이도록 학습된다.

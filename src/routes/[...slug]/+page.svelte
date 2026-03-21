@@ -115,7 +115,8 @@
 		const targetFilename = `${paperSlug}.md`;
 
 		for (const paper of allPapers) {
-			if (paper.summary && basename(paper.summary) === targetFilename) return { paper, type: 'summary' };
+			if (paper.summary && basename(paper.summary) === targetFilename)
+				return { paper, type: 'summary' };
 			if (paper.slide && basename(paper.slide) === targetFilename) return { paper, type: 'slide' };
 		}
 
@@ -124,9 +125,7 @@
 
 	// SvelteKit rest params are strings like "a/b/c" (or `undefined` at `/`).
 	let routeSlug = $derived($page.params.slug as string | undefined);
-	let routeSegments = $derived(
-		(routeSlug ? routeSlug.split('/').filter(Boolean) : []) as string[]
-	);
+	let routeSegments = $derived((routeSlug ? routeSlug.split('/').filter(Boolean) : []) as string[]);
 	let routeTopicId = $derived(routeSegments[0]);
 	let routePaperSlug = $derived(routeSegments[1]);
 	let routeHasExtra = $derived(routeSegments.length > 2);
@@ -188,10 +187,7 @@
 		paperSearchInputEl?.select();
 	}
 
-	function closeSearchPopoverOnFocusOut(
-		event: FocusEvent,
-		kind: 'topic' | 'paper'
-	) {
+	function closeSearchPopoverOnFocusOut(event: FocusEvent, kind: 'topic' | 'paper') {
 		const container = event.currentTarget as HTMLElement | null;
 		const next = event.relatedTarget as Node | null;
 		if (container && next && container.contains(next)) return;
@@ -374,14 +370,14 @@
 	}
 
 	let filteredTopics = $derived(
-		topics.filter(
-			(p) =>
-				searchTopicQuery.trim() === '' ||
-				p.title.toLowerCase().includes(searchTopicQuery.toLowerCase()) ||
-				p.keyword.join(' ').toLowerCase().includes(searchTopicQuery.toLowerCase())
-		).sort((a, b) => 
-      a.title.localeCompare(b.title, undefined, { sensitivity: 'base' })
-    )
+		topics
+			.filter(
+				(p) =>
+					searchTopicQuery.trim() === '' ||
+					p.title.toLowerCase().includes(searchTopicQuery.toLowerCase()) ||
+					p.keyword.join(' ').toLowerCase().includes(searchTopicQuery.toLowerCase())
+			)
+			.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }))
 	);
 
 	function paperYearValue(paper: Paper): number | null {
@@ -448,6 +444,17 @@
 	let theme = $state<'light' | 'dark'>('light');
 	let readerMode = $state(false);
 	let slideWidthPct = $state(100);
+	let summaryScalePct = $state(100);
+	let showSummaryScalePopover = $state(false);
+	let summaryScaleRangeEl = $state<HTMLInputElement | null>(null);
+	let useNotoSerif = $state(true);
+	let hasLoadedSummaryScale = $state(false);
+	let hasLoadedNotoToggle = $state(false);
+	let showSlideWidthPopover = $state(false);
+	let slideWidthRangeEl = $state<HTMLInputElement | null>(null);
+
+	const SUMMARY_SCALE_STORAGE_KEY = 'summary-scale-pct-v1';
+	const NOTO_TOGGLE_STORAGE_KEY = 'summary-noto-serif-v1';
 
 	let canReader = $derived.by(() => {
 		if (!selectedPaper) return false;
@@ -464,6 +471,8 @@
 		if (!renderHtml) return false;
 		return renderType === 'slide';
 	});
+
+	let canSummaryScale = $derived.by(() => renderType === 'summary');
 
 	let headDescription = $derived.by(() => {
 		if (!selectedPaper) return '';
@@ -484,6 +493,18 @@
 	});
 
 	$effect(() => {
+		if (renderType !== 'summary' && showSummaryScalePopover) {
+			showSummaryScalePopover = false;
+		}
+	});
+
+	$effect(() => {
+		if (renderType !== 'slide' && showSlideWidthPopover) {
+			showSlideWidthPopover = false;
+		}
+	});
+
+	$effect(() => {
 		if (!readerMode) return;
 		const onKeyDown = (event: KeyboardEvent) => {
 			if (event.key === 'Escape') readerMode = false;
@@ -500,9 +521,31 @@
 	});
 
 	$effect(() => {
+		if (typeof window === 'undefined') return;
+		if (!document.body) return;
+		document.body.setAttribute('data-noto', useNotoSerif ? 'on' : 'off');
+		if (!hasLoadedNotoToggle) return;
+		try {
+			localStorage.setItem(NOTO_TOGGLE_STORAGE_KEY, useNotoSerif ? 'on' : 'off');
+		} catch {
+			// Do nothing.
+		}
+	});
+
+	$effect(() => {
 		document.documentElement.setAttribute('data-theme', theme);
 		try {
 			localStorage.setItem('app-theme', theme);
+		} catch {
+			// Do nothing.
+		}
+	});
+
+	$effect(() => {
+		if (typeof window === 'undefined') return;
+		if (!hasLoadedSummaryScale) return;
+		try {
+			localStorage.setItem(SUMMARY_SCALE_STORAGE_KEY, String(summaryScalePct));
 		} catch {
 			// Do nothing.
 		}
@@ -573,6 +616,17 @@
 			try {
 				const saved = localStorage.getItem('app-theme');
 				if (saved === 'dark' || saved === 'light') theme = saved;
+				const savedScale = localStorage.getItem(SUMMARY_SCALE_STORAGE_KEY);
+				const parsedScale = savedScale ? Number(savedScale) : NaN;
+				if (Number.isFinite(parsedScale)) {
+					summaryScalePct = Math.min(200, Math.max(100, Math.round(parsedScale)));
+				}
+				hasLoadedSummaryScale = true;
+				const savedNoto = localStorage.getItem(NOTO_TOGGLE_STORAGE_KEY);
+				if (savedNoto === 'on' || savedNoto === 'off') {
+					useNotoSerif = savedNoto === 'on';
+				}
+				hasLoadedNotoToggle = true;
 				paperTags = loadPaperTags();
 			} catch {
 				// Do nothing.
@@ -597,6 +651,50 @@
 			mql.removeEventListener('change', onMediaChange);
 		};
 	});
+
+	async function toggleSummaryScalePopover() {
+		if (showSummaryScalePopover || !canSummaryScale) return;
+		showSummaryScalePopover = true;
+		await tick();
+		summaryScaleRangeEl?.focus();
+	}
+
+	function closeSummaryScalePopoverOnFocusOut(event: FocusEvent) {
+		const container = event.currentTarget as HTMLElement | null;
+		if (!container) {
+			showSummaryScalePopover = false;
+			return;
+		}
+		requestAnimationFrame(() => {
+			const active = document.activeElement;
+			if (active && container.contains(active)) return;
+			showSummaryScalePopover = false;
+		});
+	}
+
+	function setSummaryScale(next: number) {
+		summaryScalePct = Math.min(200, Math.max(100, Math.round(next)));
+	}
+
+	async function toggleSlideWidthPopover() {
+		if (showSlideWidthPopover || !canSlideWidth) return;
+		showSlideWidthPopover = true;
+		await tick();
+		slideWidthRangeEl?.focus();
+	}
+
+	function closeSlideWidthPopoverOnFocusOut(event: FocusEvent) {
+		const container = event.currentTarget as HTMLElement | null;
+		if (!container) {
+			showSlideWidthPopover = false;
+			return;
+		}
+		requestAnimationFrame(() => {
+			const active = document.activeElement;
+			if (active && container.contains(active)) return;
+			showSlideWidthPopover = false;
+		});
+	}
 
 	$effect(() => {
 		if (!selectedPaperTagKey) {
@@ -733,7 +831,7 @@
 		if (!url) return '';
 		const regex = /arxiv\.org\/(abs|pdf)\/(\d+\.\d+(v\d+)?)/;
 		const match = url.match(regex);
-		
+
 		if (match) {
 			const arxivId = match[2];
 			return `https://ar5iv.labs.arxiv.org/html/${arxivId}`;
@@ -769,16 +867,13 @@
 		if (!selectedPaper?.url) return;
 
 		let targetUrl;
-		
-		if (kind === 'arxiv')
-			 targetUrl = buildArxivUrl(selectedPaper.url);
-		else if (kind === 'ar5iv')
-			 targetUrl = buildAr5ivUrl(selectedPaper.url);
-		else if (kind === 'pdf')
-				targetUrl = buildPdfUrl(selectedPaper.url);
+
+		if (kind === 'arxiv') targetUrl = buildArxivUrl(selectedPaper.url);
+		else if (kind === 'ar5iv') targetUrl = buildAr5ivUrl(selectedPaper.url);
+		else if (kind === 'pdf') targetUrl = buildPdfUrl(selectedPaper.url);
 
 		if (!targetUrl) return;
-		
+
 		window.open(targetUrl, '_blank', 'noopener,noreferrer');
 	}
 
@@ -928,7 +1023,7 @@
 				>
 				Topics
 			</h2>
-			<div class="search-container" onfocusout={(e) => closeSearchPopoverOnFocusOut(e, 'topic')} >
+			<div class="search-container" onfocusout={(e) => closeSearchPopoverOnFocusOut(e, 'topic')}>
 				<button
 					class="search-button"
 					title="Search topics"
@@ -1085,210 +1180,287 @@
 	<!-- 3. Preview Area -->
 	<main class="preview">
 		{#if !readerMode}
-		<div class="preview-header">
-			<div class="preview-toolbar">
-				{#if isMobile}
+			<div class="preview-header">
+				<div class="preview-toolbar">
+					{#if isMobile}
+						<button
+							id="preview-toolbar-back-papers"
+							type="button"
+							class="nav-back"
+							aria-label="Back to papers"
+							onclick={() => (mobileStage = 1)}
+						>
+							<span aria-hidden="true">←</span>
+							<span class="nav-back-label">Papers</span>
+						</button>
+					{/if}
 					<button
-						id="preview-toolbar-back-papers"
+						id="preview-toolbar-toggle-topics"
 						type="button"
-						class="nav-back"
-						aria-label="Back to papers"
-						onclick={() => (mobileStage = 1)}
+						class="toolbar-button"
+						title="Toggle topics"
+						aria-pressed={!showTopicPanel}
+						onclick={() => (showTopicPanel = !showTopicPanel)}
 					>
-						<span aria-hidden="true">←</span>
-						<span class="nav-back-label">Papers</span>
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 576 512"
+							><path
+								fill="currentColor"
+								d="M97.5 400l50-160 379.4 0-50 160-379.4 0zm190.7 48L477 448c21 0 39.6-13.6 45.8-33.7l50-160c9.7-30.9-13.4-62.3-45.8-62.3l-379.4 0c-21 0-39.6 13.6-45.8 33.7L80.2 294.4 80.2 96c0-8.8 7.2-16 16-16l138.7 0c3.5 0 6.8 1.1 9.6 3.2L282.9 112c13.8 10.4 30.7 16 48 16l117.3 0c8.8 0 16 7.2 16 16l48 0c0-35.3-28.7-64-64-64L330.9 80c-6.9 0-13.7-2.2-19.2-6.4L273.3 44.8C262.2 36.5 248.8 32 234.9 32L96.2 32c-35.3 0-64 28.7-64 64l0 288c0 35.3 28.7 64 64 64l192 0z"
+							/></svg
+						>
 					</button>
-				{/if}
-				<button
-					id="preview-toolbar-toggle-topics"
-					type="button"
-					class="toolbar-button"
-					title="Toggle topics"
-					aria-pressed={!showTopicPanel}
-					onclick={() => (showTopicPanel = !showTopicPanel)}
-				>
-					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 576 512"
-						><path
-							fill="currentColor"
-							d="M97.5 400l50-160 379.4 0-50 160-379.4 0zm190.7 48L477 448c21 0 39.6-13.6 45.8-33.7l50-160c9.7-30.9-13.4-62.3-45.8-62.3l-379.4 0c-21 0-39.6 13.6-45.8 33.7L80.2 294.4 80.2 96c0-8.8 7.2-16 16-16l138.7 0c3.5 0 6.8 1.1 9.6 3.2L282.9 112c13.8 10.4 30.7 16 48 16l117.3 0c8.8 0 16 7.2 16 16l48 0c0-35.3-28.7-64-64-64L330.9 80c-6.9 0-13.7-2.2-19.2-6.4L273.3 44.8C262.2 36.5 248.8 32 234.9 32L96.2 32c-35.3 0-64 28.7-64 64l0 288c0 35.3 28.7 64 64 64l192 0z"
-						/></svg
+					<button
+						id="preview-toolbar-toggle-papers"
+						type="button"
+						class="toolbar-button"
+						title="Toggle papers"
+						aria-pressed={!showPaperPanel}
+						onclick={() => (showPaperPanel = !showPaperPanel)}
 					>
-				</button>
-				<button
-					id="preview-toolbar-toggle-papers"
-					type="button"
-					class="toolbar-button"
-					title="Toggle papers"
-					aria-pressed={!showPaperPanel}
-					onclick={() => (showPaperPanel = !showPaperPanel)}
-				>
-					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 512 512"
-						><path
-							fill="currentColor"
-							d="M40 48C26.7 48 16 58.7 16 72l0 48c0 13.3 10.7 24 24 24l48 0c13.3 0 24-10.7 24-24l0-48c0-13.3-10.7-24-24-24L40 48zM192 64c-17.7 0-32 14.3-32 32s14.3 32 32 32l288 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L192 64zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32l288 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-288 0zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32l288 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-288 0zM16 232l0 48c0 13.3 10.7 24 24 24l48 0c13.3 0 24-10.7 24-24l0-48c0-13.3-10.7-24-24-24l-48 0c-13.3 0-24 10.7-24 24zM40 368c-13.3 0-24 10.7-24 24l0 48c0 13.3 10.7 24 24 24l48 0c13.3 0 24-10.7 24-24l0-48c0-13.3-10.7-24-24-24l-48 0z"
-						/></svg
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 512 512"
+							><path
+								fill="currentColor"
+								d="M40 48C26.7 48 16 58.7 16 72l0 48c0 13.3 10.7 24 24 24l48 0c13.3 0 24-10.7 24-24l0-48c0-13.3-10.7-24-24-24L40 48zM192 64c-17.7 0-32 14.3-32 32s14.3 32 32 32l288 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L192 64zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32l288 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-288 0zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32l288 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-288 0zM16 232l0 48c0 13.3 10.7 24 24 24l48 0c13.3 0 24-10.7 24-24l0-48c0-13.3-10.7-24-24-24l-48 0c-13.3 0-24 10.7-24 24zM40 368c-13.3 0-24 10.7-24 24l0 48c0 13.3 10.7 24 24 24l48 0c13.3 0 24-10.7 24-24l0-48c0-13.3-10.7-24-24-24l-48 0z"
+							/></svg
+						>
+					</button>
+					{#if !isMobile}
+						<span class="preview-toolbar-splitter" aria-hidden="true"></span>
+					{/if}
+					<button
+						id="preview-toolbar-view-report"
+						type="button"
+						class="toolbar-button"
+						title="View report"
+						disabled={!selectedPaper?.summary}
+						onclick={() => {
+							if (selectedPaper) loadPreview(selectedPaper, 'summary', { syncUrl: true });
+						}}
 					>
-				</button>
-				{#if !isMobile}
-					<span class="preview-toolbar-splitter" aria-hidden="true"></span>
-				{/if}
-				<button
-					id="preview-toolbar-view-report"
-					type="button"
-					class="toolbar-button"
-					title="View report"
-					disabled={!selectedPaper?.summary}
-					onclick={() => {
-						if (selectedPaper) loadPreview(selectedPaper, 'summary', { syncUrl: true });
-					}}
-				>
-					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 512 512"
-						><path
-							fill="currentColor"
-							d="M168 80c-13.3 0-24 10.7-24 24l0 304c0 8.4-1.4 16.5-4.1 24L440 432c13.3 0 24-10.7 24-24l0-304c0-13.3-10.7-24-24-24L168 80zM72 480c-39.8 0-72-32.2-72-72L0 112C0 98.7 10.7 88 24 88s24 10.7 24 24l0 296c0 13.3 10.7 24 24 24s24-10.7 24-24l0-304c0-39.8 32.2-72 72-72l272 0c39.8 0 72 32.2 72 72l0 304c0 39.8-32.2 72-72 72L72 480zM192 152c0-13.3 10.7-24 24-24l48 0c13.3 0 24 10.7 24 24l0 48c0 13.3-10.7 24-24 24l-48 0c-13.3 0-24-10.7-24-24l0-48zm152 24l48 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-48 0c-13.3 0-24-10.7-24-24s10.7-24 24-24zM216 256l176 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-176 0c-13.3 0-24-10.7-24-24s10.7-24 24-24zm0 80l176 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-176 0c-13.3 0-24-10.7-24-24s10.7-24 24-24z"
-						/></svg
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 512 512"
+							><path
+								fill="currentColor"
+								d="M168 80c-13.3 0-24 10.7-24 24l0 304c0 8.4-1.4 16.5-4.1 24L440 432c13.3 0 24-10.7 24-24l0-304c0-13.3-10.7-24-24-24L168 80zM72 480c-39.8 0-72-32.2-72-72L0 112C0 98.7 10.7 88 24 88s24 10.7 24 24l0 296c0 13.3 10.7 24 24 24s24-10.7 24-24l0-304c0-39.8 32.2-72 72-72l272 0c39.8 0 72 32.2 72 72l0 304c0 39.8-32.2 72-72 72L72 480zM192 152c0-13.3 10.7-24 24-24l48 0c13.3 0 24 10.7 24 24l0 48c0 13.3-10.7 24-24 24l-48 0c-13.3 0-24-10.7-24-24l0-48zm152 24l48 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-48 0c-13.3 0-24-10.7-24-24s10.7-24 24-24zM216 256l176 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-176 0c-13.3 0-24-10.7-24-24s10.7-24 24-24zm0 80l176 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-176 0c-13.3 0-24-10.7-24-24s10.7-24 24-24z"
+							/></svg
+						>
+					</button>
+					<button
+						id="preview-toolbar-view-presentation"
+						type="button"
+						class="toolbar-button"
+						title="View presentation"
+						disabled={!selectedPaper?.slide}
+						onclick={() => {
+							if (selectedPaper) loadPreview(selectedPaper, 'slide', { syncUrl: true });
+						}}
+						><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 512 512"
+							><path
+								fill="currentColor"
+								d="M448 96l0 256-384 0 0-256 384 0zM64 32C28.7 32 0 60.7 0 96L0 352c0 35.3 28.7 64 64 64l144 0-16 48-72 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l272 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-72 0-16-48 144 0c35.3 0 64-28.7 64-64l0-256c0-35.3-28.7-64-64-64L64 32z"
+							/></svg
+						>
+					</button>
+					<button
+						id="preview-toolbar-reader-mode"
+						type="button"
+						class="toolbar-button"
+						title="Toggle reader mode"
+						aria-label="Toggle reader mode"
+						aria-pressed={readerMode}
+						disabled={!canReader}
+						onclick={() => (readerMode = !readerMode)}
 					>
-				</button>
-				<button
-					id="preview-toolbar-view-presentation"
-					type="button"
-					class="toolbar-button"
-					title="View presentation"
-					disabled={!selectedPaper?.slide}
-					onclick={() => {
-						if (selectedPaper) loadPreview(selectedPaper, 'slide', { syncUrl: true });
-					}}
-					><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 512 512"
-						><path
-							fill="currentColor"
-							d="M448 96l0 256-384 0 0-256 384 0zM64 32C28.7 32 0 60.7 0 96L0 352c0 35.3 28.7 64 64 64l144 0-16 48-72 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l272 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-72 0-16-48 144 0c35.3 0 64-28.7 64-64l0-256c0-35.3-28.7-64-64-64L64 32z"
-						/></svg
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 448 512">
+							<path
+								fill="currentColor"
+								d="M168 32L24 32C10.7 32 0 42.7 0 56L0 200c0 9.7 5.8 18.5 14.8 22.2S34.1 223.8 41 217l40-40 79 79-79 79-40-40c-6.9-6.9-17.2-8.9-26.2-5.2S0 302.3 0 312L0 456c0 13.3 10.7 24 24 24l144 0c9.7 0 18.5-5.8 22.2-14.8s1.7-19.3-5.2-26.2l-40-40 79-79 79 79-40 40c-6.9 6.9-8.9 17.2-5.2 26.2S270.3 480 280 480l144 0c13.3 0 24-10.7 24-24l0-144c0-9.7-5.8-18.5-14.8-22.2s-19.3-1.7-26.2 5.2l-40 40-79-79 79-79 40 40c6.9 6.9 17.2 8.9 26.2 5.2S448 209.7 448 200l0-144c0-13.3-10.7-24-24-24L280 32c-9.7 0-18.5 5.8-22.2 14.8S256.2 66.1 263 73l40 40-79 79-79-79 40-40c6.9-6.9 8.9-17.2 5.2-26.2S177.7 32 168 32z"
+							/>
+						</svg>
+					</button>
+					<button
+						id="preview-toolbar-open-arxiv"
+						type="button"
+						class="toolbar-button"
+						title="Open arXiv page"
+						aria-label="Open arXiv page"
+						disabled={!selectedPaper?.url}
+						onclick={() => openExternal('arxiv')}
 					>
-				</button>
-				<button
-					id="preview-toolbar-reader-mode"
-					type="button"
-					class="toolbar-button"
-					title="Toggle reader mode"
-					aria-label="Toggle reader mode"
-					aria-pressed={readerMode}
-					disabled={!canReader}
-					onclick={() => (readerMode = !readerMode)}
-				>
-					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 448 512">
-						<path fill="currentColor" d="M168 32L24 32C10.7 32 0 42.7 0 56L0 200c0 9.7 5.8 18.5 14.8 22.2S34.1 223.8 41 217l40-40 79 79-79 79-40-40c-6.9-6.9-17.2-8.9-26.2-5.2S0 302.3 0 312L0 456c0 13.3 10.7 24 24 24l144 0c9.7 0 18.5-5.8 22.2-14.8s1.7-19.3-5.2-26.2l-40-40 79-79 79 79-40 40c-6.9 6.9-8.9 17.2-5.2 26.2S270.3 480 280 480l144 0c13.3 0 24-10.7 24-24l0-144c0-9.7-5.8-18.5-14.8-22.2s-19.3-1.7-26.2 5.2l-40 40-79-79 79-79 40 40c6.9 6.9 17.2 8.9 26.2 5.2S448 209.7 448 200l0-144c0-13.3-10.7-24-24-24L280 32c-9.7 0-18.5 5.8-22.2 14.8S256.2 66.1 263 73l40 40-79 79-79-79 40-40c6.9-6.9 8.9-17.2 5.2-26.2S177.7 32 168 32z"/>
-					</svg>
-				</button>
-				<button
-					id="preview-toolbar-open-arxiv"
-					type="button"
-					class="toolbar-button"
-					title="Open arXiv page"
-					aria-label="Open arXiv page"
-					disabled={!selectedPaper?.url}
-					onclick={() => openExternal('arxiv')}
-				>
-					arXiv
-				</button>
-				<button
-					id="preview-toolbar-open-ar5iv"
-					type="button"
-					class="toolbar-button"
-					title="Open ar5iv page"
-					aria-label="Open ar5iv page"
-					disabled={!selectedPaper?.url}
-					onclick={() => openExternal('ar5iv')}
-				>
-					ar5iv
-				</button>
-				<button
-					id="preview-toolbar-open-pdf"
-					type="button"
-					class="toolbar-button"
-					title="Open PDF"
-					aria-label="Open PDF"
-					disabled={!selectedPaper?.url}
-					onclick={() => openExternal('pdf')}
-				>
-					PDF
-				</button>
-				<select class="theme-select" bind:value={theme} title="Select theme" aria-label="Select theme">
-					<option value="light">☀ Light</option>
-					<option value="dark">◑ Dark</option>
-				</select>
-				{#if renderType === 'summary'}
-					<span class="preview-toolbar-splitter" aria-hidden="true"></span>
-					<div class="summary-tag-panel">
-						<div class="summary-tag-panel-inner">
-							{#if editingTagKey === selectedPaperTagKey}
-								<div class="tag-editor-row">
-									<input
-										class="tag-editor-input"
-										type="text"
-										maxlength="29"
-										placeholder="태그1, 태그2"
-										bind:value={tagDraft}
-										bind:this={tagInputEl}
-										onkeydown={(event) => {
-											if (event.key === 'Enter') {
-												event.preventDefault();
-												skipTagBlurSave = true;
-												saveTagEdit(selectedPaperTagKey);
-											} else if (event.key === 'Escape') {
-												event.preventDefault();
-												skipTagBlurSave = true;
-												cancelTagEdit();
-											}
-										}}
-										onblur={() => saveTagEditOnBlur(selectedPaperTagKey)}
-									/>
-								</div>
-							{:else if selectedPaperTags.length > 0}
-								<div class="tag-bubble-list">
-									{#each selectedPaperTags as tag (tag)}
-										<button
-											type="button"
-											class="tag-bubble editable"
-											onclick={() => openSelectedPaperTagEditor()}
-										>
-											{tag}
-										</button>
-									{/each}
-								</div>
+						arXiv
+					</button>
+					<button
+						id="preview-toolbar-open-ar5iv"
+						type="button"
+						class="toolbar-button"
+						title="Open ar5iv page"
+						aria-label="Open ar5iv page"
+						disabled={!selectedPaper?.url}
+						onclick={() => openExternal('ar5iv')}
+					>
+						ar5iv
+					</button>
+					<button
+						id="preview-toolbar-open-pdf"
+						type="button"
+						class="toolbar-button"
+						title="Open PDF"
+						aria-label="Open PDF"
+						disabled={!selectedPaper?.url}
+						onclick={() => openExternal('pdf')}
+					>
+						PDF
+					</button>
+					<button
+						type="button"
+						class="toolbar-button theme-toggle"
+						title="Toggle theme"
+						style="padding-left: 8px;"
+						aria-label="Toggle theme"
+						aria-pressed={theme === 'dark'}
+						onclick={() => (theme = theme === 'light' ? 'dark' : 'light')}
+					>
+						{theme === 'light' ? '☀ Light' : '◑ Dark'}
+					</button>
+					{#if renderType === 'summary'}
+						<button
+							id="toggle-sans-serif"
+							type="button"
+							class="toolbar-button"
+							title="Toggle Noto Serif"
+							aria-label="Toggle Noto Serif"
+							aria-pressed={useNotoSerif}
+							onclick={() => (useNotoSerif = !useNotoSerif)}
+						>
+							{#if useNotoSerif}
+								Serif
 							{:else}
-								<button
-									type="button"
-									class="tag-add-button"
-									onclick={() => openSelectedPaperTagEditor()}
-								>
-									+태그
-								</button>
+								Sans
+							{/if}
+						</button>
+						<div class="summary-scale-popover-wrap" onfocusout={closeSummaryScalePopoverOnFocusOut}>
+							<button
+								type="button"
+								class="toolbar-button summary-scale-button"
+								title="Adjust summary scale"
+								aria-label="Adjust summary scale"
+								aria-expanded={showSummaryScalePopover}
+								disabled={showSummaryScalePopover}
+								onclick={toggleSummaryScalePopover}
+							>
+								F ⇅
+							</button>
+							{#if showSummaryScalePopover}
+								<div class="summary-scale-popover" tabindex="-1">
+									<label class="summary-scale-control">
+										<span class="summary-scale-label">Summary</span>
+										<input
+											class="summary-scale-range"
+											type="range"
+											min="100"
+											max="200"
+											step="1"
+											value={summaryScalePct}
+											oninput={(event) =>
+												setSummaryScale(Number((event.currentTarget as HTMLInputElement).value))}
+											bind:this={summaryScaleRangeEl}
+											aria-label="Summary scale (percent)"
+										/>
+										<span class="summary-scale-value">{summaryScalePct}%</span>
+									</label>
+								</div>
 							{/if}
 						</div>
-					</div>
-				{/if}
-				{#if renderType === 'slide'}
-					<label
-						class="slide-width-control"
-						class:disabled={!canSlideWidth}
-						aria-label="Slide width control"
-					>
-						<span class="slide-width-label">Slide</span>
-						<input
-							class="slide-width-range"
-							type="range"
-							min="30"
-							max="100"
-							step="1"
-							bind:value={slideWidthPct}
-							disabled={!canSlideWidth}
-							aria-label="Slide width (percent of viewport width)"
-						/>
-						<span class="slide-width-value">{slideWidthPct}%</span>
-					</label>
-				{/if}
+						<span class="preview-toolbar-splitter" aria-hidden="true"></span>
+						<div class="summary-tag-panel">
+							<div class="summary-tag-panel-inner">
+								{#if editingTagKey === selectedPaperTagKey}
+									<div class="tag-editor-row">
+										<input
+											class="tag-editor-input"
+											type="text"
+											maxlength="29"
+											placeholder="태그1, 태그2"
+											bind:value={tagDraft}
+											bind:this={tagInputEl}
+											onkeydown={(event) => {
+												if (event.key === 'Enter') {
+													event.preventDefault();
+													skipTagBlurSave = true;
+													saveTagEdit(selectedPaperTagKey);
+												} else if (event.key === 'Escape') {
+													event.preventDefault();
+													skipTagBlurSave = true;
+													cancelTagEdit();
+												}
+											}}
+											onblur={() => saveTagEditOnBlur(selectedPaperTagKey)}
+										/>
+									</div>
+								{:else if selectedPaperTags.length > 0}
+									<div class="tag-bubble-list">
+										{#each selectedPaperTags as tag (tag)}
+											<button
+												type="button"
+												class="tag-bubble editable"
+												onclick={() => openSelectedPaperTagEditor()}
+											>
+												{tag}
+											</button>
+										{/each}
+									</div>
+								{:else}
+									<button
+										type="button"
+										class="tag-add-button"
+										onclick={() => openSelectedPaperTagEditor()}
+									>
+										+태그
+									</button>
+								{/if}
+							</div>
+						</div>
+					{/if}
+					{#if renderType === 'slide'}
+						<div class="slide-width-popover-wrap" onfocusout={closeSlideWidthPopoverOnFocusOut}>
+							<button
+								type="button"
+								class="toolbar-button"
+								title="Adjust slide width"
+								style="letter-spacing: -3px; padding-left: 8px;"
+								aria-label="Adjust slide width"
+								aria-expanded={showSlideWidthPopover}
+								disabled={showSlideWidthPopover || !canSlideWidth}
+								onclick={toggleSlideWidthPopover}
+							>
+								|⟺|
+							</button>
+							{#if showSlideWidthPopover}
+								<div class="slide-width-popover" tabindex="-1">
+									<label
+										class="slide-width-control"
+										class:disabled={!canSlideWidth}
+										aria-label="Slide width control"
+									>
+										<span class="slide-width-label">Width</span>
+										<input
+											class="slide-width-range"
+											type="range"
+											min="30"
+											max="100"
+											step="1"
+											bind:value={slideWidthPct}
+											disabled={!canSlideWidth}
+											aria-label="Slide width (percent of viewport width)"
+											bind:this={slideWidthRangeEl}
+										/>
+										<span class="slide-width-value">{slideWidthPct}%</span>
+									</label>
+								</div>
+							{/if}
+						</div>
+					{/if}
+				</div>
 			</div>
-		</div>
 		{/if}
 		{#if readerMode}
 			<button
@@ -1307,7 +1479,7 @@
 				ontouchend={onSlideTouchEnd}
 			>
 				{#if renderType === 'summary'}
-					<article class="summary-content markdown-body">
+					<article class="summary-content markdown-body" style={`font-size: ${summaryScalePct}%`}>
 						{#if isLoading}
 							<p>Loading content...</p>
 						{:else}
@@ -1326,85 +1498,83 @@
 					</div>
 				{/if}
 			</div>
-		{:else}
-			{#if renderType === 'summary'}
-				<div class="preview-content markdown-body">
-					<article class="summary-content">
-						{#if isLoading}
-							<p>Loading content...</p>
-						{:else}
-							<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-							{@html renderHtml}
-						{/if}
-					</article>
-				</div>
-			{:else if renderType === 'slide'}
-				<div
-					class="preview-content markdown-body slide-content"
-					role="presentation"
-					bind:this={slidePreviewContentEl}
-					ontouchstart={onSlideTouchStart}
-					ontouchend={onSlideTouchEnd}
-				>
+		{:else if renderType === 'summary'}
+			<div class="preview-content markdown-body">
+				<article class="summary-content" style={`font-size: ${summaryScalePct}%`}>
 					{#if isLoading}
 						<p>Loading content...</p>
 					{:else}
 						<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 						{@html renderHtml}
 					{/if}
-				</div>
-			{:else}
-				<div class="placeholder">
-					{#if selectedTopic}
-						<h3>
-							{selectedTopic.title}
-							({selectedTopic.id})
-						</h3>
+				</article>
+			</div>
+		{:else if renderType === 'slide'}
+			<div
+				class="preview-content markdown-body slide-content"
+				role="presentation"
+				bind:this={slidePreviewContentEl}
+				ontouchstart={onSlideTouchStart}
+				ontouchend={onSlideTouchEnd}
+			>
+				{#if isLoading}
+					<p>Loading content...</p>
+				{:else}
+					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+					{@html renderHtml}
+				{/if}
+			</div>
+		{:else}
+			<div class="placeholder">
+				{#if selectedTopic}
+					<h3>
+						{selectedTopic.title}
+						({selectedTopic.id})
+					</h3>
 
-						{#if selectedPaper}
-							<h2>{selectedPaper?.title}</h2>
-							<div class="clamp-5">
-								{selectedPaper?.author}
-								{#if selectedPaper?.year}
-									({selectedPaper?.year})
-								{/if}
-							</div>
-							<div>
-								Select
-								<button
-									type="button"
-									class="toolbar-button"
-									disabled={!selectedPaper?.url}
-									onclick={() => openExternal('arxiv')}
-								>
-									arXiv
-								</button>,
-								<button
-									type="button"
-									class="toolbar-button"
-									disabled={!selectedPaper?.url}
-									onclick={() => openExternal('ar5iv')}
-								>
-									ar5iv
-								</button>
-								or
-								<button
-									type="button"
-									class="toolbar-button"
-									disabled={!selectedPaper?.url}
-									onclick={() => openExternal('pdf')}
-								>
-									PDF
-								</button>
-							</div>
-						{:else}
-							<div>Select a paper.</div>
-						{/if}
+					{#if selectedPaper}
+						<h2>{selectedPaper?.title}</h2>
+						<div class="clamp-5">
+							{selectedPaper?.author}
+							{#if selectedPaper?.year}
+								({selectedPaper?.year})
+							{/if}
+						</div>
+						<div>
+							Select
+							<button
+								type="button"
+								class="toolbar-button"
+								disabled={!selectedPaper?.url}
+								onclick={() => openExternal('arxiv')}
+							>
+								arXiv
+							</button>,
+							<button
+								type="button"
+								class="toolbar-button"
+								disabled={!selectedPaper?.url}
+								onclick={() => openExternal('ar5iv')}
+							>
+								ar5iv
+							</button>
+							or
+							<button
+								type="button"
+								class="toolbar-button"
+								disabled={!selectedPaper?.url}
+								onclick={() => openExternal('pdf')}
+							>
+								PDF
+							</button>
+						</div>
 					{:else}
-						<div>Select a research topic.</div>
+						<div>Select a paper.</div>
 					{/if}
-				</div>
-			{/if}
+				{:else}
+					<div>Select a research topic.</div>
+				{/if}
+			</div>
 		{/if}
 	</main>
 </div>
@@ -1537,6 +1707,7 @@
 	/* Reset / Base */
 	:global(body) {
 		margin: 0;
+		font-size: 14px;
 		font-family:
 			'Pretendard Variable',
 			'Pretendard',
@@ -1547,7 +1718,6 @@
 			'Malgun Gothic',
 			'Segoe UI',
 			sans-serif;
-		font-size: 14px;
 		line-height: 1.5;
 		background: var(--bg-base);
 		color: var(--text-primary);
@@ -1842,8 +2012,8 @@
 		overflow: hidden;
 		display: -webkit-box;
 		line-clamp: 3;
-  	-webkit-box-orient: vertical;
-  	-webkit-line-clamp: 3;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 3;
 	}
 
 	.paper-tag-list {
@@ -1902,7 +2072,7 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		  /* min-height: 1.9rem; */
+		/* min-height: 1.9rem; */
 		padding: 0.1rem 0.4rem;
 		border-radius: 999px;
 		border: 1px solid var(--border-default);
@@ -1942,8 +2112,8 @@
 		overflow: hidden;
 		display: -webkit-box;
 		line-clamp: 5;
-  	-webkit-box-orient: vertical;
-  	-webkit-line-clamp: 5;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 5;
 	}
 
 	/* Splitter */
@@ -2042,6 +2212,23 @@
 		border-color: var(--border-subtle);
 		color: var(--text-disabled);
 	}
+	.slide-width-popover-wrap {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+	}
+	.slide-width-popover {
+		position: absolute;
+		top: calc(100% + 0.4rem);
+		right: 0;
+		z-index: 20;
+		background: var(--bg-panel);
+		border: 1px solid var(--border-default);
+		border-radius: 12px;
+		box-shadow: var(--shadow-md);
+		padding: 0.6rem 0.75rem;
+		min-width: 12rem;
+	}
 
 	/* Reader Mode */
 	.app-container[data-reader='true'] {
@@ -2125,41 +2312,50 @@
 		flex-shrink: 0;
 	}
 
-	/* Theme Select */
-	.theme-select {
-		appearance: none;
-		-webkit-appearance: none;
-		border: 1px solid var(--select-border);
-		border-radius: 999px;
-		background: var(--select-bg);
-		color: var(--select-color);
-		font: inherit;
+	.theme-toggle {
+		padding: 0 0.75rem;
+	}
+
+	.summary-scale-popover-wrap {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+	}
+	.summary-scale-button {
+		padding: 0 0.6rem;
+	}
+	.summary-scale-popover {
+		position: absolute;
+		top: calc(100% + 0.4rem);
+		right: 0;
+		z-index: 20;
+		background: var(--bg-panel);
+		border: 1px solid var(--border-default);
+		border-radius: 12px;
+		box-shadow: var(--shadow-md);
+		padding: 0.6rem 0.75rem;
+		min-width: 12rem;
+	}
+	.summary-scale-control {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		color: var(--text-secondary);
 		font-size: 0.72rem;
 		font-weight: 600;
-		padding: 0.2rem 1.8rem 0.2rem 0.75rem;
-		min-height: 28px;
-		cursor: pointer;
-		/* chevron arrow via background-image */
-		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239097b0' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-		background-repeat: no-repeat;
-		background-position: right 0.6rem center;
-		transition:
-			border-color 0.15s,
-			background-color 0.15s,
-			color 0.15s;
+		letter-spacing: 0.02em;
 	}
-	.theme-select:hover {
-		border-color: var(--accent-dim);
-		color: var(--accent-text);
+	.summary-scale-label {
+		opacity: 0.7;
 	}
-	.theme-select:focus {
-		outline: none;
-		border-color: var(--accent);
-		box-shadow: 0 0 0 2px var(--accent-subtle);
+	.summary-scale-range {
+		width: 7.5rem;
 	}
-	/* Light theme: darker arrow */
-	:global([data-theme='light']) .theme-select {
-		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%234a5070' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+	.summary-scale-value {
+		font-variant-numeric: tabular-nums;
+		min-width: 3.25ch;
+		text-align: right;
+		opacity: 0.85;
 	}
 
 	/* Preview Content */
@@ -2183,7 +2379,13 @@
 		transition:
 			background 0.2s,
 			box-shadow 0.2s;
+	}
+
+	:global(body[data-noto='on']) .summary-content {
 		font-family: 'Noto Serif KR', serif;
+	}
+	:global(body[data-noto='off']) .summary-content {
+		font-family: 'Pretendard Variable', 'Pretendard';
 	}
 
 	.summary-content :global(h1),
@@ -2194,15 +2396,12 @@
 	.summary-content :global(em),
 	.summary-content :global(strong),
 	.summary-content :global(pre),
-	.summary-content :global(code)
-  {
-		font-family: 
-			'Pretendard Variable',
-			'Pretendard';
+	.summary-content :global(code) {
+		font-family: 'Pretendard Variable', 'Pretendard';
 	}
 
 	.summary-content :global(strong) {
-  	font-weight: 600;
+		font-weight: 600;
 	}
 	.summary-content :global(a) {
 		color: var(--link-color);
@@ -2472,4 +2671,3 @@
 		}
 	}
 </style>
-

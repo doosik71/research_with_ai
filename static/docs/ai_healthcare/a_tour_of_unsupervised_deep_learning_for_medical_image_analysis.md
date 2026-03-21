@@ -92,7 +92,7 @@ $$
 \min_G \max_D V(G,D)
 ====================
 
-\mathbb{E}*{x \sim p*{data}}[\log D(x)]
+\mathbb{E}\_{x \sim p*{data}}[\log D(x)]
 +
 \mathbb{E}\_{z \sim p_z}[\log(1-D(G(z)))]
 $$

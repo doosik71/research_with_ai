@@ -82,7 +82,7 @@ $$
 이 cosine head의 장점은 클래스 weight를 **지원 샘플의 평균 embedding으로 자연스럽게 대체/추가**할 수 있다는 것입니다. 즉, novel class에 대해
 
 $$
-\mathbf{w}*{novel} = \frac{1}{K}\sum*{k=1}^{K}\mathbf{e}\_k
+\mathbf{w}\_{novel} = \frac{1}{K}\sum*{k=1}^{K}\mathbf{e}\_k
 $$
 
 처럼 대표 벡터를 만들고, 이를 기존 base class weight 옆에 붙이면 됩니다. 저자들이 말하는 “incremental addition without training”이 바로 이 부분입니다.

@@ -1,6 +1,6 @@
 # From Forks to Forceps: A New Framework for Instance Segmentation of Surgical Instruments
 
-이 논문은 **수술 도구(surgical instruments)의 instance segmentation에서 실제 병목은 mask 생성보다 class 분류 오류일 수 있다**는 문제의식에서 출발한다. 저자들은 자연영상으로 사전학습된 Mask R-CNN류 instance segmentation 모델을 수술 영상에 fine-tuning하면, bounding box와 mask는 꽤 그럴듯하게 나오지만 **도구 종류(class label)를 자주 틀린다**고 분석한다. 특히 수술 도구는 길고 가늘며 비스듬히 놓이고, class 간 외형 차이도 작아서, 일반적인 bounding-box 기반 분류 head가 불리하다. 이를 해결하기 위해 논문은 기존 2-stage instance segmentation 모델 뒤에 **분류만 담당하는 3번째 단계**를 붙인 **S3Net**을 제안하고, 그 핵심 모듈로 **MSMA(Multi-Scale Mask Attended Classifier)**를 설계한다. 이 모듈은 box가 아니라 **예측된 mask를 이용해 도구 영역에 attention**을 주고, 작은 데이터셋과 낮은 inter-class variance에 대응하기 위해 **arc loss 기반 metric learning**을 사용한다. 논문은 EndoVis2017과 EndoVis2018에서 18개 이상의 기존 방법을 능가하며, EndoVis2017 benchmark에서 기존 SOTA 대비 최소 12포인트, 약 20% 향상을 보고한다.  
+이 논문은 **수술 도구(surgical instruments)의 instance segmentation에서 실제 병목은 mask 생성보다 class 분류 오류일 수 있다**는 문제의식에서 출발한다. 저자들은 자연영상으로 사전학습된 Mask R-CNN류 instance segmentation 모델을 수술 영상에 fine-tuning하면, bounding box와 mask는 꽤 그럴듯하게 나오지만 **도구 종류(class label)를 자주 틀린다**고 분석한다. 특히 수술 도구는 길고 가늘며 비스듬히 놓이고, class 간 외형 차이도 작아서, 일반적인 bounding-box 기반 분류 head가 불리하다. 이를 해결하기 위해 논문은 기존 2-stage instance segmentation 모델 뒤에 **분류만 담당하는 3번째 단계**를 붙인 **S3Net**을 제안하고, 그 핵심 모듈로 **MSMA(Multi-Scale Mask Attended Classifier)** 를 설계한다. 이 모듈은 box가 아니라 **예측된 mask를 이용해 도구 영역에 attention**을 주고, 작은 데이터셋과 낮은 inter-class variance에 대응하기 위해 **arc loss 기반 metric learning**을 사용한다. 논문은 EndoVis2017과 EndoVis2018에서 18개 이상의 기존 방법을 능가하며, EndoVis2017 benchmark에서 기존 SOTA 대비 최소 12포인트, 약 20% 향상을 보고한다.  
 
 ## 1. Paper Overview
 
@@ -97,7 +97,7 @@ $$
 
 ### 4.1 데이터셋과 비교 대상
 
-논문은 주로 **EndoVis2017(EV17)**과 **EndoVis2018(EV18)** benchmark를 사용한다. EV17은 7종류의 로봇 수술 도구를 포함하고, EV18은 validation split을 old/new로 구분해 더 다양한 generalization을 검증한다. 비교 대상은 Mask R-CNN fine-tuning 계열, ISINet, TraSeTR, AP-MTL, Mask-then-classify 등 기존 surgical instrument segmentation 방법들이다.  
+논문은 주로 **EndoVis2017(EV17)** 과 **EndoVis2018(EV18)** benchmark를 사용한다. EV17은 7종류의 로봇 수술 도구를 포함하고, EV18은 validation split을 old/new로 구분해 더 다양한 generalization을 검증한다. 비교 대상은 Mask R-CNN fine-tuning 계열, ISINet, TraSeTR, AP-MTL, Mask-then-classify 등 기존 surgical instrument segmentation 방법들이다.  
 
 ### 4.2 메인 결과
 
