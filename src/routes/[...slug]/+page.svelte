@@ -250,6 +250,7 @@
 
 		const normalized = tagDraft.trim();
 		if (!normalized) {
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
 			const { [key]: _removed, ...rest } = paperTags;
 			persistPaperTags(rest);
 			cancelTagEdit();
@@ -258,6 +259,7 @@
 
 		const parsedTags = parseTagList(normalized);
 		if (parsedTags.length === 0) {
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
 			const { [key]: _removed, ...rest } = paperTags;
 			persistPaperTags(rest);
 			cancelTagEdit();
@@ -1738,6 +1740,7 @@
 						PDF
 					</button>
 					<button
+						id="theme-toggle"
 						type="button"
 						class="toolbar-button theme-toggle"
 						title="Toggle theme"
@@ -3099,6 +3102,10 @@
 			height: 100dvh;
 			overflow: hidden;
 		}
+		#preview-toolbar-toggle-topics,
+		#preview-toolbar-toggle-papers {
+			display: none;
+		}
 		.topic-list,
 		.paper-list,
 		.preview {
@@ -3135,9 +3142,7 @@
 		.app-container[data-mobile-stage='2'] .preview {
 			pointer-events: auto;
 		}
-		.preview-toolbar button[aria-pressed] {
-			display: none;
-		}
+
 		.nav-back {
 			display: inline-flex;
 			align-items: center;
