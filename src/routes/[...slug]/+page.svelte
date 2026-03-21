@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
+	import { browser } from '$app/environment';
 	import MarkdownIt from 'markdown-it';
 	import { MarpLite } from '../marp-lite';
 
@@ -41,10 +42,31 @@
 	let showPaperPanel = $state(true);
 	let isMobile = $state(false);
 	let mobileStage = $state<0 | 1 | 2>(0); // 0: topics, 1: papers, 2: preview
+	let isLocalhost = $state(false);
 
 	type RoutePaperMatch = { paper: Paper; type: 'summary' | 'slide' };
 	const PAPER_TAG_STORAGE_KEY = 'paper-tags-v1';
 	const PAPER_TAG_TTL_MS = 1000 * 60 * 60 * 24 * 30 * 6;
+
+	let pdfjsModulePromise: Promise<
+		typeof import('pdfjs-dist') & { GlobalWorkerOptions: { workerSrc: string } }
+	> | null = null;
+
+	async function loadPdfjs() {
+		if (!browser) return null;
+		if (pdfjsModulePromise) return pdfjsModulePromise;
+
+		pdfjsModulePromise = (async () => {
+			const [pdfjs, workerUrl] = await Promise.all([
+				import('pdfjs-dist'),
+				import('pdfjs-dist/build/pdf.worker.min.mjs?url')
+			]);
+			pdfjs.GlobalWorkerOptions.workerSrc = workerUrl.default;
+			return pdfjs;
+		})();
+
+		return pdfjsModulePromise;
+	}
 
 	function basename(path: string): string {
 		const normalized = String(path ?? '');
@@ -447,11 +469,160 @@
 	let summaryScalePct = $state(100);
 	let showSummaryScalePopover = $state(false);
 	let summaryScaleRangeEl = $state<HTMLInputElement | null>(null);
+	let summaryScaleButtonEl = $state<HTMLButtonElement | null>(null);
+	let summaryScalePopoverEl = $state<HTMLDivElement | null>(null);
+	let summaryScalePopoverLeft = $state<string | null>(null);
 	let useNotoSerif = $state(true);
 	let hasLoadedSummaryScale = $state(false);
+	let hasLoadedTheme = $state(false);
 	let hasLoadedNotoToggle = $state(false);
 	let showSlideWidthPopover = $state(false);
 	let slideWidthRangeEl = $state<HTMLInputElement | null>(null);
+	let slideWidthButtonEl = $state<HTMLButtonElement | null>(null);
+	let slideWidthPopoverEl = $state<HTMLDivElement | null>(null);
+	let slideWidthPopoverLeft = $state<string | null>(null);
+	let showPromptPopover = $state(false);
+	let promptTextareaEl = $state<HTMLTextAreaElement | null>(null);
+	let promptButtonEl = $state<HTMLButtonElement | null>(null);
+	let promptPopoverEl = $state<HTMLDivElement | null>(null);
+	let promptPopoverLeft = $state<string | null>(null);
+	let promptPaperText = $state('');
+	let promptPaperKey = $state<string | null>(null);
+	let isPromptLoading = $state(false);
+	let promptError = $state<string | null>(null);
+	let promptDraft = $state('');
+	let promptCopyStatus = $state<'idle' | 'copied' | 'failed'>('idle');
+
+	const PROMPT_TEMPLATE = `# 논문 상세 분석 보고서 작성
+
+## 역할 정의
+
+당신은 컴퓨터 비전 및 딥러닝 분야의 전문가 reviewer이다.
+당신은 사용자가 논문 원문에서 추출한 텍스트를 제공받고 논문에 대한 학술 수준의 상세 분석 보고서를 생성한다.
+
+## 논문 읽기 및 분석 규칙
+
+- 한국어 번역으로 인해 정확성이 떨어질 수 있는 경우, 전문 용어는 영어 원문을 그대로 사용하라.
+- 제목과 내용이 다르더라도, 섹션 구조를 추론하라.
+- 연구 문제, 핵심 아이디어, 그리고 상세한 방법 설명은 필수적이므로 특히 주의 깊게 살펴보라.
+- 방법론의 핵심인 방정식, 아키텍처, 손실 함수, 목표 변수, 그리고 학습 절차는 쉬운 한국어로 설명하라.
+- 비교 대상, 측정 방법, 그리고 결과의 중요성을 이해할 수 있도록 실험 내용을 충분한 맥락과 함께 설명하라.
+- 논문에 명확하게 명시되지 않은 내용은 추측하지 말고 명시적으로 언급하라.
+
+## 보고서 요구 사항
+
+보고서는 원문을 읽지 않고도 내용을 이해할 수 있도록 충분히 상세해야 한다.
+
+### 출력 언어 및 어조
+
+- 한국어로 작성한다.
+- 전문 용어는 필요한 경우에만 영어로 작성한다.
+- 중국어와 일본어, 인도어 등은 일절 사용하지 않는다.
+- 간결한 목록 형식보다는 정확하고 설명적인 서술형 문장을 사용하라.
+
+## 수학 공식의 서식 요건
+
+수식을 작성할 때:
+
+- 본문 내(inline) 수식은 $...$ 태그로 표시한다.
+- 블록(block) 수식은 $$...$$ 태그로 표시한다.
+
+### 필수 구조
+
+- 보고서는 마크다운 형식을 따라 작성해야 하며 보고서의 구성 형식은 다음과 같다.
+
+---
+<메타데이터 블록>
+
+# <영어 논문 제목>
+
+- **저자**: <authors>
+- **발표연도**: <published_year>
+- **arXiv**: <arxiv_url>
+
+이후에는 다음의 섹션들을 적절한 순서로 작성한다.
+
+## 1. 논문 개요
+
+포함해야 하는 내용:
+
+- 논문의 목표에 대한 요약
+- 연구 문제
+- 문제의 중요성
+
+## 2. 핵심 아이디어
+
+포함해야 하는 내용:
+
+- 중심적인 직관 또는 설계 아이디어
+- 기존 접근 방식과의 차별점 (논문에서 명확히 제시된 경우)
+
+## 3. 상세 방법 설명
+
+포함해야 하는 내용 (있는 경우):
+
+- 전체 파이프라인 또는 시스템 구조
+- 각 주요 구성 요소 및 역할
+- 관련성이 있는 경우 훈련 목표, 손실 함수, 추론 절차 또는 알고리즘 흐름
+- 주요 방정식 설명
+
+## 4. 실험 및 결과
+
+포함해야 하는 내용 (있는 경우):
+
+- 데이터셋, 작업, 기준선, 지표
+- 주요 정량적 또는 정성적 결과
+- 실험의 실제 결과
+
+## 5. 강점, 한계
+
+포함해야 하는 내용:
+
+- 논문에서 뒷받침되는 강점
+- 한계, 가정 또는 미해결 질문
+- 논문에 근거한 간략한 비판적 해석
+
+## 6. 결론
+
+포함해야 하는 내용:
+
+- 논문의 주요 기여 사항에 대한 요약
+- 이 연구가 실제 적용이나 향후 연구에 중요한 역할을 할 가능성
+
+## 메타데이터 블록
+
+보고서의 맨 첫 줄에는 다음의 스키마를 가진 행을 추가한다.
+
+{"title": "<논문 제목>", "author": "<저자 목록>", "year": <출판 연도>, "url": "<Arxiv URL>", "summary": "<요약 파일 이름>", "slide": ""}
+---
+
+여기에서 보고서 첫 줄의 "summary" 필드 값 <요약 파일 이름>은 다음과 같이 구성한다.
+
+- 영어 논문 제목을 영어 소문자로 변환한다.
+- 공백 문자는 "_"(underbar) 문자로 대체한다.
+- 기호 등의 특수문자는 삭제한다.
+- 파일 형식의 확장자로 "".md"를 추가한다.
+
+<요약 파일 이름>의 예시: 논문 제목이 "Attention Is All You Need"인 경우, <요약 파일 이름>은 "attention_is_all_you_need.md"가 된다.
+
+## 분석 보고서 품질 검사
+
+마무리 전:
+- 제목 라벨이 일관적인지 확인한다.
+- 코드 펜스가 균형 있게 배치되었는지 확인한다.
+- 목록 형식이 올바른지 확인한다.
+- 수학 구분 기호가 균형 있게 사용되었는지 확인한다.
+- 마크다운 lint 오류가 명백한 경우 수정한다.
+- 용어가 일관되게 사용되었는지 확인한다.
+- 실제로 접근할 수 없는 부분을 읽었다고 주장하지 않는다.
+
+## 논문에서 추출한 텍스트
+
+- 논문에서 추출한 텍스트는 다음과 같다.
+
+---
+
+`;
 
 	const SUMMARY_SCALE_STORAGE_KEY = 'summary-scale-pct-v1';
 	const NOTO_TOGGLE_STORAGE_KEY = 'summary-noto-serif-v1';
@@ -534,6 +705,7 @@
 
 	$effect(() => {
 		document.documentElement.setAttribute('data-theme', theme);
+		if (!hasLoadedTheme) return;
 		try {
 			localStorage.setItem('app-theme', theme);
 		} catch {
@@ -611,6 +783,10 @@
 
 		applyMobileMode(mql.matches, mql.matches);
 		mql.addEventListener('change', onMediaChange);
+		isLocalhost =
+			window.location.hostname === 'localhost' ||
+			window.location.hostname === '127.0.0.1' ||
+			window.location.hostname === '0.0.0.0';
 
 		void (async () => {
 			try {
@@ -631,6 +807,7 @@
 			} catch {
 				// Do nothing.
 			}
+			hasLoadedTheme = true;
 
 			try {
 				const res = await fetch('/docs/manifest.json');
@@ -656,6 +833,7 @@
 		if (showSummaryScalePopover || !canSummaryScale) return;
 		showSummaryScalePopover = true;
 		await tick();
+		positionSummaryScalePopover();
 		summaryScaleRangeEl?.focus();
 	}
 
@@ -676,10 +854,41 @@
 		summaryScalePct = Math.min(200, Math.max(100, Math.round(next)));
 	}
 
+	function positionSummaryScalePopover() {
+		if (typeof window === 'undefined') return;
+		if (!summaryScalePopoverEl || !summaryScaleButtonEl) return;
+
+		const popoverRect = summaryScalePopoverEl.getBoundingClientRect();
+		const buttonRect = summaryScaleButtonEl.getBoundingClientRect();
+		const wrapRect = summaryScalePopoverEl.parentElement?.getBoundingClientRect();
+		if (!wrapRect) return;
+
+		const padding = 8;
+		const viewportWidth = window.innerWidth;
+		let left = buttonRect.left;
+
+		if (left < padding) left = padding;
+		if (left + popoverRect.width > viewportWidth - padding) {
+			left = Math.max(padding, viewportWidth - padding - popoverRect.width);
+		}
+
+		summaryScalePopoverLeft = `${left - wrapRect.left}px`;
+	}
+
+	$effect(() => {
+		if (typeof window === 'undefined') return;
+		if (!showSummaryScalePopover) return;
+
+		const onResize = () => positionSummaryScalePopover();
+		window.addEventListener('resize', onResize);
+		return () => window.removeEventListener('resize', onResize);
+	});
+
 	async function toggleSlideWidthPopover() {
 		if (showSlideWidthPopover || !canSlideWidth) return;
 		showSlideWidthPopover = true;
 		await tick();
+		positionSlideWidthPopover();
 		slideWidthRangeEl?.focus();
 	}
 
@@ -695,6 +904,36 @@
 			showSlideWidthPopover = false;
 		});
 	}
+
+	function positionSlideWidthPopover() {
+		if (typeof window === 'undefined') return;
+		if (!slideWidthPopoverEl || !slideWidthButtonEl) return;
+
+		const popoverRect = slideWidthPopoverEl.getBoundingClientRect();
+		const buttonRect = slideWidthButtonEl.getBoundingClientRect();
+		const wrapRect = slideWidthPopoverEl.parentElement?.getBoundingClientRect();
+		if (!wrapRect) return;
+
+		const padding = 8;
+		const viewportWidth = window.innerWidth;
+		let left = buttonRect.left;
+
+		if (left < padding) left = padding;
+		if (left + popoverRect.width > viewportWidth - padding) {
+			left = Math.max(padding, viewportWidth - padding - popoverRect.width);
+		}
+
+		slideWidthPopoverLeft = `${left - wrapRect.left}px`;
+	}
+
+	$effect(() => {
+		if (typeof window === 'undefined') return;
+		if (!showSlideWidthPopover) return;
+
+		const onResize = () => positionSlideWidthPopover();
+		window.addEventListener('resize', onResize);
+		return () => window.removeEventListener('resize', onResize);
+	});
 
 	$effect(() => {
 		if (!selectedPaperTagKey) {
@@ -849,6 +1088,182 @@
 		return url;
 	}
 
+	function buildPromptPaperKey(paper: Paper | null): string | null {
+		if (!paper?.url) return null;
+		const arxiv = buildArxivUrl(paper.url);
+		if (arxiv) return arxiv;
+		if (paper.summary) return paper.summary;
+		if (paper.slide) return paper.slide;
+		return paper.title;
+	}
+
+	async function extractTextFromPdf(url: string): Promise<string> {
+		const pdfjs = await loadPdfjs();
+		if (!pdfjs) throw new Error('PDF parser unavailable.');
+
+		const res = await fetchWithProxy(url);
+		if (!res.ok) throw new Error('Failed to fetch PDF.');
+		const buffer = await res.arrayBuffer();
+
+		const doc = await pdfjs.getDocument({ data: buffer }).promise;
+		const totalPages = doc.numPages ?? 0;
+		const chunks: string[] = [];
+
+		for (let pageNum = 1; pageNum <= totalPages; pageNum += 1) {
+			const page = await doc.getPage(pageNum);
+			const content = await page.getTextContent();
+			const text = content.items
+				.map((item) => ('str' in item ? String(item.str) : ''))
+				.filter(Boolean)
+				.join(' ');
+			if (text) chunks.push(text);
+		}
+
+		return chunks.join('\n');
+	}
+
+	async function fetchWithProxy(url: string): Promise<Response> {
+		try {
+			const direct = await fetch(url);
+			if (direct.ok) return direct;
+			throw new Error('Direct fetch failed.');
+		} catch {
+			if (!isLocalhost) throw new Error('Fetch blocked by CORS.');
+			const proxyUrl = `/api/dev-proxy?url=${encodeURIComponent(url)}`;
+			const proxied = await fetch(proxyUrl);
+			if (!proxied.ok) throw new Error('Proxy fetch failed.');
+			return proxied;
+		}
+	}
+
+	async function fetchPromptPaperText(paper: Paper) {
+		if (!paper.url) return '';
+		const ar5ivUrl = buildAr5ivUrl(paper.url);
+		const pdfUrl = buildPdfUrl(paper.url);
+
+		if (ar5ivUrl) {
+			try {
+				const res = await fetchWithProxy(ar5ivUrl);
+				if (res.ok) {
+					const html = await res.text();
+					if (html.length > 500) {
+						const noScript = html.replace(
+							/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+							''
+						);
+						const noTags = noScript.replace(/<[^>]+>/g, '');
+						const noTrailing = noTags.replace(/[ \t]+$/gm, '');
+						const collapsed = noTrailing.replace(/\n{3,}/g, '\n\n');
+						return collapsed.trim();
+					}
+				}
+			} catch {
+				// Fall back to PDF extraction.
+			}
+		}
+
+		if (pdfUrl) {
+			try {
+				const pdfText = await extractTextFromPdf(pdfUrl);
+				const noTrailing = pdfText.replace(/[ \t]+$/gm, '');
+				const collapsed = noTrailing.replace(/\n{3,}/g, '\n\n');
+				return collapsed.trim();
+			} catch {
+				// Fall back.
+			}
+		}
+
+		return '';
+	}
+
+	async function openPromptPopover() {
+		if (showPromptPopover) return;
+		showPromptPopover = true;
+		promptError = null;
+		promptCopyStatus = 'idle';
+		await tick();
+		positionPromptPopover();
+		promptTextareaEl?.focus();
+		await refreshPromptPaperText();
+	}
+
+	function closePromptPopoverOnFocusOut(event: FocusEvent) {
+		const container = event.currentTarget as HTMLElement | null;
+		if (!container) {
+			showPromptPopover = false;
+			return;
+		}
+		requestAnimationFrame(() => {
+			const active = document.activeElement;
+			if (active && container.contains(active)) return;
+			showPromptPopover = false;
+		});
+	}
+
+	async function refreshPromptPaperText() {
+		if (!selectedPaper) return;
+		const key = buildPromptPaperKey(selectedPaper);
+		if (!key) return;
+
+		if (promptPaperKey === key && promptPaperText) return;
+
+		isPromptLoading = true;
+		promptError = null;
+
+		try {
+			const text = await fetchPromptPaperText(selectedPaper);
+			promptPaperText = text;
+			promptPaperKey = key;
+			promptDraft = `${PROMPT_TEMPLATE}\n\n${text}`;
+
+			if (!text) promptError = 'Failed to extract paper text.';
+		} catch (err) {
+			promptError = err instanceof Error ? err.message : 'Failed to extract paper text.';
+		} finally {
+			isPromptLoading = false;
+		}
+	}
+
+	function positionPromptPopover() {
+		if (typeof window === 'undefined') return;
+		if (!promptPopoverEl || !promptButtonEl) return;
+
+		const popoverRect = promptPopoverEl.getBoundingClientRect();
+		const buttonRect = promptButtonEl.getBoundingClientRect();
+		const wrapRect = promptPopoverEl.parentElement?.getBoundingClientRect();
+		if (!wrapRect) return;
+
+		const padding = 8;
+		const viewportWidth = window.innerWidth;
+		let left = buttonRect.left;
+
+		if (left < padding) left = padding;
+		if (left + popoverRect.width > viewportWidth - padding) {
+			left = Math.max(padding, viewportWidth - padding - popoverRect.width);
+		}
+
+		promptPopoverLeft = `${left - wrapRect.left}px`;
+	}
+
+	async function copyPromptToClipboard() {
+		if (!promptDraft) return;
+		try {
+			await navigator.clipboard.writeText(promptDraft);
+			promptCopyStatus = 'copied';
+		} catch {
+			promptCopyStatus = 'failed';
+		}
+	}
+
+	$effect(() => {
+		if (typeof window === 'undefined') return;
+		if (!showPromptPopover) return;
+
+		const onResize = () => positionPromptPopover();
+		window.addEventListener('resize', onResize);
+		return () => window.removeEventListener('resize', onResize);
+	});
+
 	function selectPaper(paper: Paper) {
 		selectedPaper = paper;
 		renderType = 'none';
@@ -977,6 +1392,18 @@
 	{/if}
 	<meta property="og:title" content="Research-with-AI" />
 	<meta property="og:type" content={ogType} />
+	<script>
+		(() => {
+			try {
+				const saved = localStorage.getItem('app-theme');
+				if (saved === 'dark' || saved === 'light') {
+					document.documentElement.setAttribute('data-theme', saved);
+				}
+			} catch {
+				// Do nothing.
+			}
+		})();
+	</script>
 	<script>
 		window.MathJax = {
 			tex: {
@@ -1339,6 +1766,7 @@
 						</button>
 						<div class="summary-scale-popover-wrap" onfocusout={closeSummaryScalePopoverOnFocusOut}>
 							<button
+								id="summary-scale-button"
 								type="button"
 								class="toolbar-button summary-scale-button"
 								title="Adjust summary scale"
@@ -1346,13 +1774,21 @@
 								aria-expanded={showSummaryScalePopover}
 								disabled={showSummaryScalePopover}
 								onclick={toggleSummaryScalePopover}
+								bind:this={summaryScaleButtonEl}
 							>
 								F ⇅
 							</button>
 							{#if showSummaryScalePopover}
-								<div class="summary-scale-popover" tabindex="-1">
+								<div
+									class="summary-scale-popover"
+									tabindex="-1"
+									bind:this={summaryScalePopoverEl}
+									style={summaryScalePopoverLeft
+										? `--summary-popover-left: ${summaryScalePopoverLeft}; --summary-popover-right: auto;`
+										: undefined}
+								>
 									<label class="summary-scale-control">
-										<span class="summary-scale-label">Summary</span>
+										<span class="summary-scale-label">Scale</span>
 										<input
 											class="summary-scale-range"
 											type="range"
@@ -1431,11 +1867,19 @@
 								aria-expanded={showSlideWidthPopover}
 								disabled={showSlideWidthPopover || !canSlideWidth}
 								onclick={toggleSlideWidthPopover}
+								bind:this={slideWidthButtonEl}
 							>
 								|⟺|
 							</button>
 							{#if showSlideWidthPopover}
-								<div class="slide-width-popover" tabindex="-1">
+								<div
+									class="slide-width-popover"
+									tabindex="-1"
+									bind:this={slideWidthPopoverEl}
+									style={slideWidthPopoverLeft
+										? `--slide-popover-left: ${slideWidthPopoverLeft}; --slide-popover-right: auto;`
+										: undefined}
+								>
 									<label
 										class="slide-width-control"
 										class:disabled={!canSlideWidth}
@@ -1567,6 +2011,66 @@
 							>
 								PDF
 							</button>
+							{#if isLocalhost}
+								<div class="prompt-popover-wrap" onfocusout={closePromptPopoverOnFocusOut}>
+									Click&nbsp;
+									<button
+										type="button"
+										class="toolbar-button prompt-button"
+										disabled={!selectedPaper?.url || isPromptLoading}
+										onclick={openPromptPopover}
+										bind:this={promptButtonEl}
+									>
+										Prompt
+									</button>
+									{#if showPromptPopover}
+										<div
+											class="prompt-popover"
+											tabindex="-1"
+											bind:this={promptPopoverEl}
+											style={promptPopoverLeft
+												? `--prompt-popover-left: ${promptPopoverLeft}; --prompt-popover-right: auto;`
+												: undefined}
+										>
+											<div class="prompt-popover-header">
+												<span>Prompt Builder</span>
+												<div class="prompt-actions">
+													<button
+														type="button"
+														class="prompt-action"
+														disabled={isPromptLoading}
+														onclick={() => refreshPromptPaperText()}
+													>
+														Refresh
+													</button>
+													<button
+														type="button"
+														class="prompt-action"
+														disabled={!promptDraft}
+														onclick={copyPromptToClipboard}
+													>
+														Copy
+													</button>
+												</div>
+											</div>
+											<textarea
+												class="prompt-textarea"
+												bind:this={promptTextareaEl}
+												bind:value={promptDraft}
+											></textarea>
+											{#if isPromptLoading}
+												<div class="prompt-status">Extracting paper text...</div>
+											{:else if promptError}
+												<div class="prompt-status error">{promptError}</div>
+											{:else if promptCopyStatus === 'copied'}
+												<div class="prompt-status">Copied to clipboard.</div>
+											{:else if promptCopyStatus === 'failed'}
+												<div class="prompt-status error">Copy failed.</div>
+											{/if}
+										</div>
+									{/if}
+								</div>
+							{/if}
 						</div>
 					{:else}
 						<div>Select a paper.</div>
@@ -2220,7 +2724,8 @@
 	.slide-width-popover {
 		position: absolute;
 		top: calc(100% + 0.4rem);
-		right: 0;
+		left: var(--slide-popover-left, auto);
+		right: var(--slide-popover-right, 0);
 		z-index: 20;
 		background: var(--bg-panel);
 		border: 1px solid var(--border-default);
@@ -2327,7 +2832,8 @@
 	.summary-scale-popover {
 		position: absolute;
 		top: calc(100% + 0.4rem);
-		right: 0;
+		left: var(--summary-popover-left, auto);
+		right: var(--summary-popover-right, 0);
 		z-index: 20;
 		background: var(--bg-panel);
 		border: 1px solid var(--border-default);
@@ -2356,6 +2862,87 @@
 		min-width: 3.25ch;
 		text-align: right;
 		opacity: 0.85;
+	}
+
+	.prompt-popover-wrap {
+		position: relative;
+		display: flex;
+		align-items: center;
+		margin: 1rem auto 10rem;
+	}
+
+	.prompt-popover {
+		position: absolute;
+		top: calc(100% + 0.4rem);
+		left: var(--prompt-popover-left, 0);
+		right: var(--prompt-popover-right, auto);
+		z-index: 20;
+		background: var(--bg-panel);
+		border: 1px solid var(--border-default);
+		border-radius: 12px;
+		box-shadow: var(--shadow-md);
+		padding: 0.6rem 0.75rem;
+		min-width: min(32rem, 92vw);
+		max-width: min(32rem, 92vw);
+	}
+
+	.prompt-popover-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		color: var(--text-secondary);
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.03em;
+		text-transform: uppercase;
+		margin-bottom: 0.4rem;
+	}
+
+	.prompt-actions {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+	}
+
+	.prompt-action {
+		border: 1px solid var(--border-default);
+		border-radius: 999px;
+		background: var(--bg-panel-alt);
+		color: var(--text-secondary);
+		font-size: 0.65rem;
+		font-weight: 600;
+		padding: 0.1rem 0.55rem;
+		cursor: pointer;
+	}
+
+	.prompt-action:hover {
+		background: var(--bg-hover);
+	}
+
+	.prompt-textarea {
+		width: 100%;
+		min-height: 12rem;
+		max-height: 50vh;
+		resize: vertical;
+		box-sizing: border-box;
+		border: 1px solid var(--border-default);
+		border-radius: 10px;
+		background: var(--bg-panel-alt);
+		color: var(--text-primary);
+		padding: 0.6rem 0.7rem;
+		margin: 0;
+		font: inherit;
+		line-height: 1.5;
+	}
+
+	.prompt-status {
+		margin-top: 0.35rem;
+		font-size: 0.72rem;
+		color: var(--text-muted);
+	}
+
+	.prompt-status.error {
+		color: var(--tone-pink-fg);
 	}
 
 	/* Preview Content */
