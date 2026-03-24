@@ -42,6 +42,13 @@
     ]
   },
   {
+    "id": "domain_adaptation",
+    "title": "Domain Adaptation",
+    "keyword": [
+      "domain adaptation"
+    ]
+  },
+  {
     "id": "instance_segmentation",
     "title": "Instance Segmentation",
     "keyword": [

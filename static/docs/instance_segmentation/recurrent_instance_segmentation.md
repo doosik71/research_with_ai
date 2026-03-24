@@ -35,12 +35,14 @@ Long Short-Term Memory (LSTM) 네트워크는 기울기 소실(vanishing gradien
 ConvLSTM 유닛은 LSTM 유닛과 유사하지만, 각 게이트의 완전 연결 레이어가 컨볼루션으로 대체된다는 점이 유일한 차이점입니다. 업데이트 방정식은 다음과 같습니다:
 
 $$
-\mathbf{i_{t}}={\rm Sigmoid}\\left({\rm Conv}\\left(\mathbf{x_{t}};\\mathbf{w_{xi}}\\right)+{\rm Conv}\\left(\mathbf{h_{t-1}};\\mathbf{w_{hi}}\\right)+\\mathbf{b_{i}}\\right)\\
-\\mathbf{f_{t}}={\rm Sigmoid}\\left({\rm Conv}\\left(\mathbf{x_{t}};\\mathbf{w_{xf}}\\right)+{\rm Conv}\\left(\mathbf{h_{t-1}};\\mathbf{w_{hf}}\\right)+\\mathbf{b_{f}}\\right)\\
-\\mathbf{o_{t}}={\rm Sigmoid}\\left({\rm Conv}\\left(\mathbf{x_{t}};\\mathbf{w_{xo}}\\right)+{\rm Conv}\\left(\mathbf{h_{t-1}};\\mathbf{w_{ho}}\\right)+\\mathbf{b_{o}}\\right)\\
-\\mathbf{g_{t}}={\rm Tanh\\,\\,\\,\\,}\\left({\rm Conv}\\left(\mathbf{x_{t}};\\mathbf{w_{xg}}\\right)+{\rm Conv}\\left(\mathbf{h_{t-1}};\\mathbf{w_{hg}}\\right)+\\mathbf{b_{g}}\\right)\\
-\\mathbf{c_{t}}=\\mathbf{f_{t}}\\odot\\mathbf{c_{t-1}}+\\mathbf{i_{t}}\\odot\\mathbf{g_{t}}\\
-\\mathbf{h_{t}}=\\mathbf{o_{t}}\\odot{\rm Tanh\\,\\,\\,\\,}(\\mathbf{c_{t}})
+\begin{aligned}
+\mathbf{i_{t}} &= {\rm Sigmoid}\left({\rm Conv}\left(\mathbf{x_{t}};\mathbf{w_{xi}}\right)+{\rm Conv}\left(\mathbf{h_{t-1}};\mathbf{w_{hi}}\right)+\mathbf{b_{i}}\right) \\
+\mathbf{f_{t}} &= {\rm Sigmoid}\left({\rm Conv}\left(\mathbf{x_{t}};\mathbf{w_{xf}}\right)+{\rm Conv}\left(\mathbf{h_{t-1}};\mathbf{w_{hf}}\right)+\mathbf{b_{f}}\right) \\
+\mathbf{o_{t}} &= {\rm Sigmoid}\left({\rm Conv}\left(\mathbf{x_{t}};\mathbf{w_{xo}}\right)+{\rm Conv}\left(\mathbf{h_{t-1}};\mathbf{w_{ho}}\right)+\mathbf{b_{o}}\right) \\
+\mathbf{g_{t}} &= {\rm Tanh}\left({\rm Conv}\left(\mathbf{x_{t}};\mathbf{w_{xg}}\right)+{\rm Conv}\left(\mathbf{h_{t-1}};\mathbf{w_{hg}}\right)+\mathbf{b_{g}}\right) \\
+\mathbf{c_{t}} &= \mathbf{f_{t}}\odot\mathbf{c_{t-1}}+\mathbf{i_{t}}\odot\mathbf{g_{t}} \\
+\mathbf{h_{t}} &= \mathbf{o_{t}}\odot{\rm Tanh}(\mathbf{c_{t}})
+\end{aligned}
 $$
 
 여기서 $\mathbf{x_t}$는 현재 시점의 입력, $\mathbf{h_{t-1}}$는 이전 시점의 숨겨진 상태, $\mathbf{c_{t-1}}$는 이전 시점의 셀 상태를 나타냅니다. $\mathbf{i_t}, \mathbf{f_t}, \mathbf{o_t}, \mathbf{g_t}$는 각각 입력, 망각, 출력, 게이트 게이트를 의미하며, Sigmoid와 Tanh 함수가 활성화 함수로 사용됩니다. $\odot$는 요소별 곱셈을 나타냅니다.
