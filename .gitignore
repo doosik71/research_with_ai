@@ -12,6 +12,7 @@ node_modules/
 
 # Project
 .vscode/
+.opencode/
 git_commit_message.txt
 *.pdf
 temp.txt

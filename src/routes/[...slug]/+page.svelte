@@ -1451,9 +1451,8 @@
 					renderHtml = postProcessImage(postProcessMath(md.render(processed)));
 				} else if (type === 'slide') {
 					const { html, css } = marp.render(processed);
-					renderHtml = postProcessMath(
-						`<style>${css}</style><div class="marp-slide-wrapper">${html}</div>`
-					);
+					const processedHtml = postProcessMath(html);
+					renderHtml = `<style>${css}</style><div class="marp-slide-wrapper">${processedHtml}</div>`;
 				}
 			} else {
 				renderHtml = `<p>File not found: ${filename}</p>`;
@@ -2663,7 +2662,6 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		/* min-height: 1.9rem; */
 		padding: 0.1rem 0.4rem;
 		border-radius: 999px;
 		border: 1px solid var(--border-default);
@@ -3129,6 +3127,7 @@
 		max-height: 100dvh;
 		width: 100%;
 		height: auto;
+		padding: 2em;
 	}
 
 	/* Placeholder & Loading */
