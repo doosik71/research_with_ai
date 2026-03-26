@@ -46,10 +46,19 @@
 
 	type HighlightPopoverState = {
 		mode: HighlightPopoverMode;
+		anchorLeft: number;
+		anchorTop: number;
 		left: number;
 		top: number;
 		groupId?: string;
 		blocks?: string[];
+	};
+
+	type SelectionInteractionMode = 'mouse' | 'touch' | 'pen' | 'keyboard';
+
+	type HighlightPopoverOffset = {
+		x: number;
+		y: number;
 	};
 
 	type PaperListItem =
@@ -265,6 +274,8 @@
 	let summaryHighlights = $state<SummaryHighlightEntry[]>([]);
 	let highlightPopover = $state<HighlightPopoverState | null>(null);
 	let renderedSummaryDocKey = $state<string | null>(null);
+	let lastSelectionInteractionMode = $state<SelectionInteractionMode>('mouse');
+	let highlightPopoverOffset = $state<HighlightPopoverOffset>({ x: 0, y: 0 });
 	let touchStartX = 0;
 	let touchStartY = 0;
 	let selectedPaperTagKey = $derived(buildPaperTagKey(selectedTopic?.id, selectedPaper));
@@ -580,6 +591,7 @@
 	let promptError = $state<string | null>(null);
 	let promptDraft = $state('');
 	let promptCopyStatus = $state<'idle' | 'copied' | 'failed'>('idle');
+	let promptCopyResetTimer = 0;
 
 	const PROMPT_TEMPLATE = `# 논문 상세 분석 보고서 작성
 
@@ -915,6 +927,14 @@
 		return Array.from(appEl.querySelectorAll<HTMLElement>('.summary-content'));
 	}
 
+	function getSummaryRootFromNode(node: Node | null): HTMLElement | null {
+		if (!node) return null;
+		for (const root of getSummaryContentElements()) {
+			if (root.contains(node)) return root;
+		}
+		return null;
+	}
+
 	function isExcludedHighlightNode(node: Node | null, root: HTMLElement): boolean {
 		const parent = node instanceof HTMLElement ? node : node?.parentElement;
 		if (!parent) return true;
@@ -1145,22 +1165,44 @@
 		highlightPopover = null;
 	}
 
+	function highlightPopoverVerticalGap() {
+		return lastSelectionInteractionMode === 'touch' || lastSelectionInteractionMode === 'pen'
+			? 56
+			: 12;
+	}
+
+	function clampHighlightPopoverPosition(left: number, top: number, width: number, height: number) {
+		const padding = 8;
+		const halfWidth = width / 2;
+		const clampedLeft = Math.max(
+			padding + halfWidth,
+			Math.min(window.innerWidth - padding - halfWidth, left)
+		);
+		const clampedTop = Math.max(padding, Math.min(window.innerHeight - padding - height, top));
+		return { left: clampedLeft, top: clampedTop };
+	}
+
+	function buildHighlightPopoverPosition(anchorLeft: number, anchorTop: number) {
+		return {
+			left: anchorLeft + highlightPopoverOffset.x,
+			top: anchorTop + highlightPopoverOffset.y
+		};
+	}
+
 	async function positionHighlightPopover() {
 		if (!highlightPopoverEl || !highlightPopover) return;
 		await tick();
 		const rect = highlightPopoverEl.getBoundingClientRect();
-		const padding = 8;
-		let left = highlightPopover.left;
-		let top = highlightPopover.top;
+		let { left, top } = buildHighlightPopoverPosition(
+			highlightPopover.anchorLeft,
+			highlightPopover.anchorTop
+		);
+		const gap = highlightPopoverVerticalGap();
 
-		const halfWidth = rect.width / 2;
-		if (left + halfWidth > window.innerWidth - padding) {
-			left = window.innerWidth - padding - halfWidth;
+		if (highlightPopoverOffset.y === 0 && top + rect.height > window.innerHeight - 8) {
+			top = highlightPopover.anchorTop - rect.height - gap * 2;
 		}
-		if (left - halfWidth < padding) left = padding + halfWidth;
-		if (top + rect.height > window.innerHeight - padding) {
-			top = Math.max(padding, highlightPopover.top - rect.height - 12);
-		}
+		({ left, top } = clampHighlightPopoverPosition(left, top, rect.width, rect.height));
 
 		highlightPopover = { ...highlightPopover, left, top };
 	}
@@ -1171,21 +1213,33 @@
 			return;
 		}
 
+		const gap = highlightPopoverVerticalGap();
+		const anchorLeft = rect.left + rect.width / 2;
+		const anchorTop = rect.bottom + gap;
+		const { left, top } = buildHighlightPopoverPosition(anchorLeft, anchorTop);
 		highlightPopover = {
 			mode: 'create',
 			blocks,
-			left: rect.left + rect.width / 2,
-			top: rect.bottom + 12
+			anchorLeft,
+			anchorTop,
+			left,
+			top
 		};
 		await positionHighlightPopover();
 	}
 
 	async function openEditHighlightPopover(groupId: string, rect: DOMRect) {
+		const gap = highlightPopoverVerticalGap();
+		const anchorLeft = rect.left + rect.width / 2;
+		const anchorTop = rect.bottom + gap;
+		const { left, top } = buildHighlightPopoverPosition(anchorLeft, anchorTop);
 		highlightPopover = {
 			mode: 'edit',
 			groupId,
-			left: rect.left + rect.width / 2,
-			top: rect.bottom + 12
+			anchorLeft,
+			anchorTop,
+			left,
+			top
 		};
 		await positionHighlightPopover();
 	}
@@ -1226,10 +1280,8 @@
 		closeHighlightPopover();
 	}
 
-	async function handleSummarySelectionChange(event: MouseEvent | KeyboardEvent) {
-		if (renderType !== 'summary') return;
-		const root = event.currentTarget instanceof HTMLElement ? event.currentTarget : null;
-		if (!root) return;
+	async function syncHighlightPopoverFromSelection(root: HTMLElement | null) {
+		if (renderType !== 'summary' || !root) return;
 
 		await tick();
 		const selection = window.getSelection();
@@ -1253,6 +1305,12 @@
 		await openCreateHighlightPopover(blocks, range.getBoundingClientRect());
 	}
 
+	async function handleSummarySelectionChange(event: MouseEvent | KeyboardEvent) {
+		const root = event.currentTarget instanceof HTMLElement ? event.currentTarget : null;
+		lastSelectionInteractionMode = event instanceof KeyboardEvent ? 'keyboard' : 'mouse';
+		await syncHighlightPopoverFromSelection(root);
+	}
+
 	function handleSummaryClick(event: MouseEvent) {
 		const target = event.target instanceof HTMLElement ? event.target : null;
 		const highlight = target?.closest<HTMLElement>('.summary-highlight');
@@ -1265,6 +1323,55 @@
 		const groupId = highlight.dataset.highlightGroupId;
 		if (!groupId) return;
 		void openEditHighlightPopover(groupId, highlight.getBoundingClientRect());
+	}
+
+	function onHighlightPopoverDragStart(event: PointerEvent) {
+		if (!highlightPopover || !highlightPopoverEl) return;
+		if (event.pointerType === 'mouse' && event.button !== 0) return;
+
+		const rect = highlightPopoverEl.getBoundingClientRect();
+		const width = rect.width;
+		const height = rect.height;
+		const offsetX = event.clientX - rect.left;
+		const offsetY = event.clientY - rect.top;
+
+		event.preventDefault();
+		event.stopPropagation();
+		highlightPopoverEl.setPointerCapture?.(event.pointerId);
+
+		const move = (moveEvent: PointerEvent) => {
+			if (!highlightPopover) return;
+			if (moveEvent.pointerId !== event.pointerId) return;
+
+			const halfWidth = width / 2;
+			const nextCenterX = moveEvent.clientX - offsetX + halfWidth;
+			const nextTop = moveEvent.clientY - offsetY;
+			const { left, top } = clampHighlightPopoverPosition(nextCenterX, nextTop, width, height);
+
+			highlightPopover = {
+				...highlightPopover,
+				left,
+				top
+			};
+		};
+
+		const up = (upEvent: PointerEvent) => {
+			if (upEvent.pointerId !== event.pointerId) return;
+			if (highlightPopover) {
+				highlightPopoverOffset = {
+					x: highlightPopover.left - highlightPopover.anchorLeft,
+					y: highlightPopover.top - highlightPopover.anchorTop
+				};
+			}
+			highlightPopoverEl?.releasePointerCapture?.(event.pointerId);
+			window.removeEventListener('pointermove', move);
+			window.removeEventListener('pointerup', up);
+			window.removeEventListener('pointercancel', up);
+		};
+
+		window.addEventListener('pointermove', move);
+		window.addEventListener('pointerup', up);
+		window.addEventListener('pointercancel', up);
 	}
 
 	function rebuildRenderedSummaryHtml() {
@@ -1311,6 +1418,9 @@
 
 	onMount(() => {
 		const MOBILE_MEDIA_QUERY = '(max-width: 960px)';
+		let selectionSyncTimer = 0;
+		let isSummarySelectionPointerActive = false;
+		let hasPendingSelectionSync = false;
 
 		const ensureMobileStageValid = () => {
 			if (!isMobile) return;
@@ -1358,11 +1468,87 @@
 			closeHighlightPopover();
 		};
 
-		const onViewportChange = () => closeHighlightPopover();
+		const scheduleSelectionSync = (delay = 0) => {
+			if (selectionSyncTimer) window.clearTimeout(selectionSyncTimer);
+			selectionSyncTimer = window.setTimeout(() => {
+				selectionSyncTimer = 0;
+				const selection = window.getSelection();
+				const root = getSummaryRootFromNode(selection?.rangeCount ? selection.getRangeAt(0).commonAncestorContainer : null);
+				void syncHighlightPopoverFromSelection(root);
+			}, delay);
+		};
 
-		document.addEventListener('mousedown', onGlobalPointerDown, true);
-		window.addEventListener('resize', onViewportChange);
-		window.addEventListener('scroll', onViewportChange, true);
+		const onSelectionChange = () => {
+			if (renderType !== 'summary') return;
+			if (isSummarySelectionPointerActive) {
+				hasPendingSelectionSync = true;
+				if (highlightPopover?.mode === 'create') closeHighlightPopover();
+				return;
+			}
+			const delay =
+				lastSelectionInteractionMode === 'touch' || lastSelectionInteractionMode === 'pen'
+					? 120
+					: 0;
+			scheduleSelectionSync(delay);
+		};
+
+		const onDocumentPointerDown = (event: PointerEvent) => {
+			lastSelectionInteractionMode =
+				event.pointerType === 'touch' || event.pointerType === 'pen' ? event.pointerType : 'mouse';
+			const target = event.target instanceof Node ? event.target : null;
+			isSummarySelectionPointerActive = !!(
+				target &&
+				!highlightPopoverEl?.contains(target) &&
+				getSummaryRootFromNode(target)
+			);
+			hasPendingSelectionSync = false;
+			onGlobalPointerDown(event);
+		};
+
+		const onDocumentPointerUp = (event: PointerEvent) => {
+			lastSelectionInteractionMode =
+				event.pointerType === 'touch' || event.pointerType === 'pen' ? event.pointerType : 'mouse';
+			const shouldSync = isSummarySelectionPointerActive || hasPendingSelectionSync;
+			isSummarySelectionPointerActive = false;
+			hasPendingSelectionSync = false;
+			if (renderType === 'summary' && shouldSync) {
+				scheduleSelectionSync(event.pointerType === 'mouse' ? 0 : 120);
+			}
+		};
+
+		const onDocumentTouchEnd = () => {
+			lastSelectionInteractionMode = 'touch';
+			const shouldSync = isSummarySelectionPointerActive || hasPendingSelectionSync;
+			isSummarySelectionPointerActive = false;
+			hasPendingSelectionSync = false;
+			if (renderType === 'summary' && shouldSync) scheduleSelectionSync(120);
+		};
+
+		const onDocumentPointerCancel = () => {
+			isSummarySelectionPointerActive = false;
+			hasPendingSelectionSync = false;
+		};
+
+		const onDocumentKeyUp = () => {
+			lastSelectionInteractionMode = 'keyboard';
+			if (renderType === 'summary') scheduleSelectionSync(0);
+		};
+
+		const onViewportResize = () => {
+			if (!highlightPopover) return;
+			void positionHighlightPopover();
+		};
+
+		const onViewportScroll = () => closeHighlightPopover();
+
+		document.addEventListener('pointerdown', onDocumentPointerDown, true);
+		document.addEventListener('pointerup', onDocumentPointerUp, true);
+		document.addEventListener('pointercancel', onDocumentPointerCancel, true);
+		document.addEventListener('touchend', onDocumentTouchEnd, true);
+		document.addEventListener('selectionchange', onSelectionChange);
+		document.addEventListener('keyup', onDocumentKeyUp, true);
+		window.addEventListener('resize', onViewportResize);
+		window.addEventListener('scroll', onViewportScroll, true);
 
 		void (async () => {
 			try {
@@ -1402,10 +1588,20 @@
 		})();
 
 		return () => {
+			if (promptCopyResetTimer) {
+				window.clearTimeout(promptCopyResetTimer);
+				promptCopyResetTimer = 0;
+			}
+			if (selectionSyncTimer) window.clearTimeout(selectionSyncTimer);
 			mql.removeEventListener('change', onMediaChange);
-			document.removeEventListener('mousedown', onGlobalPointerDown, true);
-			window.removeEventListener('resize', onViewportChange);
-			window.removeEventListener('scroll', onViewportChange, true);
+			document.removeEventListener('pointerdown', onDocumentPointerDown, true);
+			document.removeEventListener('pointerup', onDocumentPointerUp, true);
+			document.removeEventListener('pointercancel', onDocumentPointerCancel, true);
+			document.removeEventListener('touchend', onDocumentTouchEnd, true);
+			document.removeEventListener('selectionchange', onSelectionChange);
+			document.removeEventListener('keyup', onDocumentKeyUp, true);
+			window.removeEventListener('resize', onViewportResize);
+			window.removeEventListener('scroll', onViewportScroll, true);
 		};
 	});
 
@@ -1827,9 +2023,17 @@
 
 	async function copyPromptToClipboard() {
 		if (!promptDraft) return;
+		if (promptCopyResetTimer) {
+			window.clearTimeout(promptCopyResetTimer);
+			promptCopyResetTimer = 0;
+		}
 		try {
 			await navigator.clipboard.writeText(promptDraft);
 			promptCopyStatus = 'copied';
+			promptCopyResetTimer = window.setTimeout(() => {
+				promptCopyStatus = 'idle';
+				promptCopyResetTimer = 0;
+			}, 1000);
 		} catch {
 			promptCopyStatus = 'failed';
 		}
@@ -2661,11 +2865,12 @@
 													</button>
 													<button
 														type="button"
+														class:copied={promptCopyStatus === 'copied'}
 														class="prompt-action"
 														disabled={!promptDraft}
 														onclick={copyPromptToClipboard}
 													>
-														Copy
+														{promptCopyStatus === 'copied' ? 'Copied' : 'Copy'}
 													</button>
 												</div>
 											</div>
@@ -2678,8 +2883,6 @@
 												<div class="prompt-status">Extracting paper text...</div>
 											{:else if promptError}
 												<div class="prompt-status error">{promptError}</div>
-											{:else if promptCopyStatus === 'copied'}
-												<div class="prompt-status">Copied to clipboard.</div>
 											{:else if promptCopyStatus === 'failed'}
 												<div class="prompt-status error">Copy failed.</div>
 											{/if}
@@ -2705,9 +2908,25 @@
 		bind:this={highlightPopoverEl}
 		style={`left: ${highlightPopover.left}px; top: ${highlightPopover.top}px;`}
 	>
-		<div class="highlight-popover-title">
+		<button
+			type="button"
+			class="highlight-popover-drag-handle left"
+			aria-label="Move highlight popover"
+			onpointerdown={onHighlightPopoverDragStart}
+		></button>
+		<button
+			type="button"
+			class="highlight-popover-drag-handle right"
+			aria-label="Move highlight popover"
+			onpointerdown={onHighlightPopoverDragStart}
+		></button>
+		<button
+			type="button"
+			class="highlight-popover-title"
+			onpointerdown={onHighlightPopoverDragStart}
+		>
 			Highlight
-		</div>
+		</button>
 		<div class="highlight-color-row">
 			{#each SUMMARY_HIGHLIGHT_COLORS as color (color)}
 				<button
@@ -3061,13 +3280,52 @@
 		min-width: 12rem;
 	}
 
+	.highlight-popover-drag-handle {
+		position: absolute;
+		top: 0.4rem;
+		bottom: 0.4rem;
+		width: 0.8rem;
+		appearance: none;
+		background: transparent;
+		border: 0;
+		padding: 0;
+		cursor: grab;
+		touch-action: none;
+		user-select: none;
+	}
+
+	.highlight-popover-drag-handle.left {
+		left: 0.1rem;
+	}
+
+	.highlight-popover-drag-handle.right {
+		right: 0.1rem;
+	}
+
+	.highlight-popover-drag-handle:active {
+		cursor: grabbing;
+	}
+
 	.highlight-popover-title {
+		appearance: none;
+		background: none;
+		border: 0;
+		padding: 0;
+		width: 100%;
+		text-align: left;
 		font-size: 0.72rem;
 		font-weight: 700;
 		letter-spacing: 0.03em;
 		text-transform: uppercase;
 		color: var(--text-secondary);
 		margin-bottom: 0.55rem;
+		cursor: grab;
+		touch-action: none;
+		user-select: none;
+	}
+
+	.highlight-popover-title:active {
+		cursor: grabbing;
 	}
 
 	.highlight-color-row {
@@ -3683,6 +3941,16 @@
 
 	.prompt-action:hover {
 		background: var(--bg-hover);
+	}
+
+	.prompt-action.copied {
+		background: var(--text-primary);
+		color: var(--bg-panel);
+		border-color: var(--text-primary);
+	}
+
+	.prompt-action.copied:hover {
+		background: var(--text-primary);
 	}
 
 	.prompt-textarea {
