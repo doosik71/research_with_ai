@@ -35,7 +35,7 @@ $$
 $$
 \mathcal{L}_{CLP}(W,\theta)
 \mathrel{\overset{\tiny def}{=}}
-\mathbb{E}[\ell(f*{W,\theta}(X),Y)] =
+\mathbb{E}[\ell(f_{W,\theta}(X),Y)] =
 \int\left[\int \ell(f_{W,\theta}(x),y)p(y|x)dy\right]\mu(x)dx
 $$
 
@@ -64,8 +64,8 @@ OML은 여러 CLP 문제 $\mathcal{T}_i \sim p(\mathcal{T})$ 위에서 학습된
 $$
 \min_{W,\theta}\sum_{\mathcal{T}_i \sim p(\mathcal{T})}\text{OML}(W,\theta)
 \mathrel{\overset{\tiny def}{=}}
-\sum*{\mathcal{T}_i \sim p(\mathcal{T})}
-\sum*{\mathcal{S}_k^j \sim p(\mathcal{S}_k|\mathcal{T}_i)}
+\sum_{\mathcal{T}_i \sim p(\mathcal{T})}
+\sum_{\mathcal{S}_k^j \sim p(\mathcal{S}_k|\mathcal{T}_i)}
 \left[
 \mathcal{L}_{CLP_i}\big(U(W,\theta,\mathcal{S}_k^j)\big)
 \right]

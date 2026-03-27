@@ -79,15 +79,15 @@ $$
 논문은 전체 손실을 두 부분으로 구성한다.
 
 $$
-\mathcal{L} = \mathcal{L}*{segm} + \mathcal{L}*{pred}
+\mathcal{L} = \mathcal{L}_{segm} + \mathcal{L}_{pred}
 $$
 
-여기서 $\mathcal{L}*{segm}$은 instance segmentation loss, $\mathcal{L}*{pred}$는 model prediction loss다.
+여기서 $\mathcal{L}_{segm}$은 instance segmentation loss, $\mathcal{L}_{pred}$는 model prediction loss다.
 
 instance segmentation loss는 다음과 같이 표현된다.
 
 $$
-\mathcal{L}*{segm}(x) = \sum*{g=1}^{M} c_g(x)\times \mathcal{L}_{ins}^{g}(g(x), y)
+\mathcal{L}_{segm}(x) = \sum_{g=1}^{M} c_g(x)\times \mathcal{L}_{ins}^{g}(g(x), y)
 $$
 
 여기서 $M$은 사용한 segmentation 모델 수이고, $g(x)$는 $g$번째 모델의 예측, $y$는 ground truth다. $c$는 one-hot 벡터처럼 동작하여, Algorithm 1에서 선택된 최적 모델에 대해서만 $c_i=1$이고 나머지는 0이다. 결국 실제로는 “현재 이미지에서 pseudo-label로 선택된 모델의 segmentation loss만 반영한다”는 뜻이다.

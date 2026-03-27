@@ -48,7 +48,7 @@ $$
 
 $$
 p(y=c \mid \mathbf{x}, \mathcal{D}_{train})
-\approx \frac{1}{T} \sum*{t=1}^T p(y=c \mid \mathbf{x}, \hat{\omega}_t)
+\approx \frac{1}{T} \sum_{t=1}^T p(y=c \mid \mathbf{x}, \hat{\omega}_t)
 $$
 
 여기서 $\hat{\omega}_t \sim q*\theta^*(\omega)$는 dropout mask가 적용된 서로 다른 샘플에 해당한다. 직관적으로는 **test time dropout을 켠 채 여러 번 예측하고 평균을 내는 것**이다. 이 과정이 epistemic uncertainty를 반영해 준다.

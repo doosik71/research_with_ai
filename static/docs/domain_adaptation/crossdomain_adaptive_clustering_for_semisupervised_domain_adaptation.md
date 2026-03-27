@@ -94,7 +94,7 @@ $\hat{y}_j^u=\arg\max(\mathbf{p}_j)$
 
 이후 같은 샘플의 또 다른 augmentation인 $x_j''$에 대해 예측을 수행하고, confidence가 threshold $\tau$ 이상일 때만 pseudo label을 사용해 supervised cross-entropy를 건다.
 
-$\mathbf{L}_{\mathbf{PL}}=-\sum*{j=1}^{M}\mathbb{1}{\max(\mathbf{p}_j)\ge\tau}\cdot \hat{y}_j^u \log(\mathbf{p}(x_j''))$
+$\mathbf{L}_{\mathbf{PL}}=-\sum_{j=1}^{M}\mathbb{1}{\max(\mathbf{p}_j)\ge\tau}\cdot \hat{y}_j^u \log(\mathbf{p}(x_j''))$
 
 여기서 $\tau$는 pseudo label 채택 임계값이며, 실험에서는 $\tau=0.95$를 사용한다.
 

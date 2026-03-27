@@ -70,8 +70,8 @@ higher-order term의 의미가 중요하다. image-level annotation에서는 “
 논문의 가장 중요한 수식적 기여는 두 분포를 함께 묶는 학습 목적이다. 저자들은 task-specific loss $\Delta$ 를 이용해 두 분포 사이의 diversity / self-diversity를 정의하고, 이를 바탕으로 **dissimilarity coefficient** 를 최소화한다. 최종 objective는 다음처럼 주어진다.
 
 $$
-\theta_p^{\*}, \theta_c^{\*} = \operatorname*{arg min}_{\theta_p,\theta_c}
-DISC*{\Delta}\left(\Pr_p(\theta_p), \text{Pr}_c(\theta_c)\right)
+\theta_p^{\*}, \theta_c^{\*} = \operatorname_{arg min}_{\theta_p,\theta_c}
+DISC_{\Delta}\left(\Pr_p(\theta_p), \text{Pr}_c(\theta_c)\right)
 $$
 
 즉, conditional distribution이 샘플링하는 annotation-consistent instance와 prediction distribution이 내는 instance mask가 task-specific loss 기준으로 가까워지도록 양쪽을 동시에 조정한다.

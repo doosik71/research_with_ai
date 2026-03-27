@@ -24,7 +24,7 @@
 
 전체 구조는 **encoder-decoder architecture**이다. encoder는 ResNet-101 backbone을 사용하여 이미지로부터 다중 해상도의 convolutional feature를 추출하고, decoder는 여러 개의 ConvLSTM을 계층적으로 연결한 recurrent upsampling network로 구성된다. semantic segmentation 계열 모델처럼 encoder의 intermediate feature를 decoder에 skip connection으로 전달하지만, 여기서는 decoder가 recurrent하므로 각 time step마다 서로 다른 hidden state를 바탕으로 다른 객체를 예측하게 된다.
 
-입력 이미지를 $x$라 하고, 정답을 객체들의 집합 $y = {y_1, \dots, y_n}$라 하자. 모델은 이를 순서가 있는 예측 시퀀스 $\hat{y} = (\hat{y}*1, \dots, \hat{y}*{\hat{n}})$로 출력한다. 각 time step $t$의 예측은 다음 네 요소로 구성된다.
+입력 이미지를 $x$라 하고, 정답을 객체들의 집합 $y = {y_1, \dots, y_n}$라 하자. 모델은 이를 순서가 있는 예측 시퀀스 $\hat{y} = (\hat{y}_1, \dots, \hat{y}_{\hat{n}})$로 출력한다. 각 time step $t$의 예측은 다음 네 요소로 구성된다.
 
 $$
 \hat{y}_t = {\hat{y}^m_t,; \hat{y}^b_t,; \hat{y}^c_t,; \hat{y}^s_t}

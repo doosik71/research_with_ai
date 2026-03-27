@@ -22,7 +22,7 @@ MiME의 중심 아이디어는 매우 명확합니다.
 
 ### 3.1 데이터 표현 단위
 
-논문은 한 환자의 $t$번째 방문을 $\mathcal{V}^{(t)}$ 로 두고, 그 안에 여러 diagnosis object $\mathcal{O}^{(t)}_i$ 가 있다고 정의합니다. 각 diagnosis object는 하나의 diagnosis code $d_i^{(t)}$ 와, 그 진단에 연결된 treatment code 집합 $\mathcal{M}_i^{(t)}$ 를 가집니다. 치료 코드는 medication과 procedure를 포함합니다. 방문 표현은 $\mathbf{v}^{(t)}$, 진단 객체 표현은 $\mathbf{o}^{(t)}_i$ 로 표기됩니다. 또한 auxiliary prediction은 $p(d_i^{(t)}|\mathbf{o}^{(t)}_i)$ 및 $p(m*{i,j}^{(t)}|\mathbf{o}^{(t)}_i)$ 형태로 정의됩니다.
+논문은 한 환자의 $t$번째 방문을 $\mathcal{V}^{(t)}$ 로 두고, 그 안에 여러 diagnosis object $\mathcal{O}^{(t)}_i$ 가 있다고 정의합니다. 각 diagnosis object는 하나의 diagnosis code $d_i^{(t)}$ 와, 그 진단에 연결된 treatment code 집합 $\mathcal{M}_i^{(t)}$ 를 가집니다. 치료 코드는 medication과 procedure를 포함합니다. 방문 표현은 $\mathbf{v}^{(t)}$, 진단 객체 표현은 $\mathbf{o}^{(t)}_i$ 로 표기됩니다. 또한 auxiliary prediction은 $p(d_i^{(t)}|\mathbf{o}^{(t)}_i)$ 및 $p(m_{i,j}^{(t)}|\mathbf{o}^{(t)}_i)$ 형태로 정의됩니다.
 
 이 정의 자체가 중요합니다. MiME는 “방문 안의 코드들”을 곧바로 합치는 대신, **진단 객체라는 중간 표현 단위** 를 둠으로써 diagnosis-specific treatment relation을 보존합니다.
 
@@ -37,7 +37,7 @@ MiME의 중심 아이디어는 매우 명확합니다.
 논문에서 비교적 선명하게 드러나는 수식은 interaction 함수입니다.
 
 $$
-g(d_i, m_{i,j}) = \sigma(\mathbf{W}_m r(d_i)) \odot r(m*{i,j})
+g(d_i, m_{i,j}) = \sigma(\mathbf{W}_m r(d_i)) \odot r(m_{i,j})
 $$
 
 여기서 $r(d_i)$ 와 $r(m_{i,j})$ 는 각각 diagnosis code와 treatment code의 embedding이고, $\sigma(\mathbf{W}_m r(d_i))$ 는 diagnosis에 의해 조절되는 gate처럼 작동하며, treatment embedding과 element-wise product $\odot$ 로 결합됩니다. 저자들은 이 formulation이 bilinear pooling 계열 아이디어에서 영감을 받았다고 설명합니다.

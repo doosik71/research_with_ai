@@ -35,10 +35,10 @@
 external memory는 이미 찾은 객체들을 누적 저장하여 다음 객체 탐색에 활용하는 장치다. 시점 $t$ 에서의 canvas $\mathbf{c}_t$ 는 이전까지 예측한 segmentation의 누적 결과를 담는다.
 
 $$
-\mathbf{c}*{t}=
+\mathbf{c}_{t}=
 \begin{cases}
 \mathbf{0}, & \text{if } t=0\
-\max(\mathbf{c}*{t-1}, \mathbf{y}_{t-1}), & \text{otherwise}
+\max(\mathbf{c}_{t-1}, \mathbf{y}_{t-1}), & \text{otherwise}
 \end{cases}
 $$
 
@@ -65,10 +65,10 @@ $$
 box network 내부에는 glimpse를 여러 번 보는 LSTM이 있다. 시점 $t$ 안에서 내부 glimpse index를 $\tau$ 로 둔다. 처음에는 attention weight $\alpha_{t,0}^{h,w}$ 를 모든 위치에 균일하게 놓고, 각 glimpse에서 현재 attention으로 가중합한 feature를 LSTM에 넣는다.
 
 $$
-\mathbf{z}*{t,\tau}=
+\mathbf{z}_{t,\tau}=
 \begin{cases}
 \mathbf{0}, & \text{if } \tau=0\
-\text{LSTM}\left(\mathbf{z}*{t,\tau-1}, \sum_{h,w}\alpha_{t,\tau-1}^{h,w}u_t^{h,w,l}\right), & \text{otherwise}
+\text{LSTM}\left(\mathbf{z}_{t,\tau-1}, \sum_{h,w}\alpha_{t,\tau-1}^{h,w}u_t^{h,w,l}\right), & \text{otherwise}
 \end{cases}
 $$
 
@@ -87,10 +87,10 @@ $$
 최종 hidden state $\mathbf{z}_{t,\text{end}}$ 에서 선형층을 통해 box parameter를 예측한다.
 
 $$
-[\tilde{g}*{X,Y}, \log \tilde{\delta}*{X,Y}, \log \sigma_{X,Y}, \gamma]
+[\tilde{g}_{X,Y}, \log \tilde{\delta}_{X,Y}, \log \sigma_{X,Y}, \gamma]
 =======================================================================
 
-\mathbf{w}*b^\top \mathbf{z}*{t,\text{end}} + w_{b0}
+\mathbf{w}_b^\top \mathbf{z}_{t,\text{end}} + w_{b0}
 $$
 
 여기서 $\tilde{g}_X, \tilde{g}_Y$ 는 정규화된 중심 좌표, $\tilde{\delta}_X, \tilde{\delta}_Y$ 는 box 크기, $\sigma_X, \sigma_Y$ 는 추출용 Gaussian kernel의 폭, $\gamma$ 는 나중에 segmentation patch를 원본 크기로 되돌릴 때 강도를 조절하는 스케일 값이다. 실제 이미지 좌표계로의 변환은 다음과 같다.
@@ -178,7 +178,7 @@ $$
 s_t
 ===
 
-\text{sigmoid}\left(\mathbf{w}*{zs}^{\top}\mathbf{z}*{t,\text{end}}+\mathbf{w}*{vs}^{\top}\mathbf{v}*{t}+w_{s0}\right)
+\text{sigmoid}\left(\mathbf{w}_{zs}^{\top}\mathbf{z}_{t,\text{end}}+\mathbf{w}_{vs}^{\top}\mathbf{v}_{t}+w_{s0}\right)
 $$
 
 이 score는 두 가지 역할을 한다. 하나는 counting이다. score가 1에 가까운 step은 실제 객체가 존재한다고 보고, 0에 가까운 step은 더 이상 객체가 없다고 본다. 다른 하나는 종료 조건이다. 추론 시에는 $s_t<0.5$ 가 되면 반복을 멈춘다. 논문은 최대 객체 수보다 1 큰 길이로 학습해 마지막 빈 step까지 모델이 보게 만든다.
@@ -255,9 +255,9 @@ $$
 
 $$
 \begin{aligned}
-\mathcal{L}*{s}(\mathbf{s},\mathbf{s}^{*})=\frac{1}{T}\sum*{t}
-&-s^{*}*{t}\log\left(\min*{t^{\prime}\leq t}{s_{t^{\prime}}}\right)\
-&-(1-s^{*}*{t})\log\left(1-\max*{t^{\prime}\geq t}{s_{t^{\prime}}}\right)
+\mathcal{L}_{s}(\mathbf{s},\mathbf{s}^{*})=\frac{1}{T}\sum_{t}
+&-s^{*}_{t}\log\left(\min_{t^{\prime}\leq t}{s_{t^{\prime}}}\right)\
+&-(1-s^{*}_{t})\log\left(1-\max_{t^{\prime}\geq t}{s_{t^{\prime}}}\right)
 \end{aligned}
 $$
 

@@ -36,7 +36,7 @@ v(\pi)=J(\pi;\mathcal{M})=\mathbb{E}_{s\sim \mu_0}[V^\pi(s)]
 $$
 로 정의한다. 여기서
 $$
-V^\pi(s)=\mathbb{E}_{\pi}\mathbb{E}_{\mathcal{M}}\left[\sum*{t=1}^{\infty}\gamma^{t-1}r_t \mid s_1=s\right]
+V^\pi(s)=\mathbb{E}_{\pi}\mathbb{E}_{\mathcal{M}}\left[\sum_{t=1}^{\infty}\gamma^{t-1}r_t \mid s_1=s\right]
 $$
 이다. offline RL에서는 environment와 상호작용하지 못하고, 관측 데이터셋 $\mathcal{D}_{obs}={s_i,a_i,r_i,s_i'}_{i=1}^N$ 만 이용해 policy를 학습한다. 따라서 실제 목표는 이 데이터만으로 좋은 policy를 배우는 것뿐 아니라, 여러 learned policy 중 가장 좋은 policy를 고르는 것이다.  
 

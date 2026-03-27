@@ -228,7 +228,7 @@ Pascal-Context $\rightarrow$ Cityscapes에서 baseline은 Common 53.79, Private 
 
 #### DSPD 내부 구성 분석
 
-DSPD의 두 요소인 $w$와 $\mathcal{L}_{proto}$를 따로 분석한 결과도 제공된다. baseline에서 $w$만 쓰면 Common 54.38, Private 21.75, H-score 31.08로 오히려 나빠진다. 반면 $\mathcal{L}*{proto}$만 쓰면 Common 59.71, Private 26.76, H-score 36.96으로 baseline보다 개선된다. 둘을 함께 쓰면 Common 59.46, Private 27.97, H-score 38.04로 가장 좋다.
+DSPD의 두 요소인 $w$와 $\mathcal{L}_{proto}$를 따로 분석한 결과도 제공된다. baseline에서 $w$만 쓰면 Common 54.38, Private 21.75, H-score 31.08로 오히려 나빠진다. 반면 $\mathcal{L}_{proto}$만 쓰면 Common 59.71, Private 26.76, H-score 36.96으로 baseline보다 개선된다. 둘을 함께 쓰면 Common 59.46, Private 27.97, H-score 38.04로 가장 좋다.
 
 이 결과는 논문의 중요한 메시지 하나를 보여준다. **weight scaling $w$는 standalone으로는 충분히 동작하지 않는다**. 즉, prototype 구조가 먼저 제대로 형성되어야 $w$가 common/private distinction 신호로서 의미 있게 작동한다. 다시 말해, $w$는 prototype learning이 뒷받침될 때만 효과적이다. 이는 방법 설계의 논리적 일관성을 뒷받침한다.
 

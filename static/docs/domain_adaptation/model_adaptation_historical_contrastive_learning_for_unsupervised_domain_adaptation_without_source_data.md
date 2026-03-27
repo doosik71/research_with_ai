@@ -102,7 +102,7 @@ $$
 
 로 계산한다.
 
-이 식의 의미는 직관적이다. 현재 모델과 historical model의 class probability 분포가 서로 비슷하면 $|p^t - p^{t-m}|*1$ 가 작아지고, 따라서 $h*{con}$ 은 커진다. 반대로 예측이 크게 다르면 consistency가 낮다고 판단해 $h_{con}$ 이 작아진다.
+이 식의 의미는 직관적이다. 현재 모델과 historical model의 class probability 분포가 서로 비슷하면 $|p^t - p^{t-m}|_1$ 가 작아지고, 따라서 $h_{con}$ 은 커진다. 반대로 예측이 크게 다르면 consistency가 낮다고 판단해 $h_{con}$ 이 작아진다.
 
 이후 HCCD는 weighted cross-entropy 형태의 self-training loss를 사용한다.
 

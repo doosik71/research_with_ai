@@ -102,7 +102,7 @@ E_{\text{CNN},z,p}(y_p) =
 \end{cases}
 $$
 
-여기서 $\mathbf{y}^**z = \arg\max*{\mathbf{y}_z} F(z,\mathbf{y}_z,w)$이고, $y^*_{z,p}$는 patch $z$에서 pixel $p$에 대해 CNN이 가장 높게 예측한 label이다.
+여기서 $\mathbf{y}^**z = \arg\max_{\mathbf{y}_z} F(z,\mathbf{y}_z,w)$이고, $y^*_{z,p}$는 patch $z$에서 pixel $p$에 대해 CNN이 가장 높게 예측한 label이다.
 
 즉, CNN이 어떤 픽셀을 patch 안에서 2번째로 가까운 차라고 예측했다면, 전역적으로는 2, 3, 4, … 같은 더 먼 순서로 재배치되는 것은 허용하지만, 1처럼 더 가까운 순서로 가는 것은 선호하지 않는다.
 

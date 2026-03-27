@@ -41,7 +41,7 @@ $$
 여기서 $h$는 분류기, $\ell(h(x), y)$는 예측과 정답의 불일치를 나타내는 loss 함수다. 그러나 실제 목표는 source가 아니라 target에서의 risk를 줄이는 것이다. 그래서 target risk는
 
 $$
-R_{\mathcal{T}}(h) = \mathbb{E}_{(x,y)\sim P_S}\left[\frac{p*{\mathcal{T}}(x,y)}{p_{\mathcal{S}}(x,y)}\ell(h(x), y)\right]
+R_{\mathcal{T}}(h) = \mathbb{E}_{(x,y)\sim P_S}\left[\frac{p_{\mathcal{T}}(x,y)}{p_{\mathcal{S}}(x,y)}\ell(h(x), y)\right]
 $$
 
 처럼 쓸 수 있다. 이 식이 의미하는 바는 직관적으로 명확하다. source 샘플이라도 target에서 더 자주 나타날 법한 샘플은 더 크게 반영하고, 반대로 target과 덜 관련된 source 샘플은 덜 반영해야 한다는 것이다. 문제는 실제로 $\frac{p_{\mathcal{T}}(x,y)}{p_{\mathcal{S}}(x,y)}$를 알기 어렵다는 점이다. 그래서 domain adaptation은 이 비율을 직접 추정하거나, 근사적으로 feature space를 바꾸거나, 학습 과정에서 domain-invariant representation을 만들도록 유도하는 방향으로 발전한다.
@@ -53,7 +53,7 @@ $$
 instance-based adaptation은 source 샘플 각각에 가중치를 부여하여, 가중된 source 분포가 target 분포를 더 잘 반영하도록 만드는 방법이다. covariate shift 가정 아래에서는 target risk가
 
 $$
-R_{\mathcal{T}}(h) = \mathbb{E}_{(x,y)\sim P_S}\left[\frac{p*{\mathcal{T}}(x)}{p_{\mathcal{S}}(x)}\ell(h(x), y)\right]
+R_{\mathcal{T}}(h) = \mathbb{E}_{(x,y)\sim P_S}\left[\frac{p_{\mathcal{T}}(x)}{p_{\mathcal{S}}(x)}\ell(h(x), y)\right]
 $$
 
 로 단순화된다. 여기서

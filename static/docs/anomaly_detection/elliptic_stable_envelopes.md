@@ -44,7 +44,7 @@ equivariant elliptic cohomology $\mathrm{Ell}_{\mathrm{T}}(X)$는 $X$와 torus $
 
 논문에서 중요한 장치는 universal line bundle $\mathscr{U}$이다. 이것은
 $$
-\mathrm{E}*{\mathrm{T}}(X)=\mathrm{Ell}*{\mathrm{T}}(X)\times \mathscr{E}*{\mathrm{Pic}*{\mathrm{T}}(X)}
+\mathrm{E}_{\mathrm{T}}(X)=\mathrm{Ell}_{\mathrm{T}}(X)\times \mathscr{E}_{\mathrm{Pic}_{\mathrm{T}}(X)}
 $$
 위에 놓이는 line bundle이며, equivariant 변수와 Kähler 변수를 함께 담는다. 여기서 Kähler 변수는 단순한 형식 변수라기보다 Picard lattice를 elliptic curve와 tensor한 공간 위의 점으로 취급된다.
 
@@ -92,9 +92,9 @@ $$
 
 ### 3.7 $R$-matrix와 tensor product
 
-두 chamber $\mathfrak{C}_1,\mathfrak{C}*2$ 사이의 stable envelope를 비교하면
+두 chamber $\mathfrak{C}_1,\mathfrak{C}_2$ 사이의 stable envelope를 비교하면
 $$
-R*{\mathfrak{C}_2\leftarrow \mathfrak{C}_1} = \mathrm{Stab}_{\mathfrak{C}*2}^{-1}\circ \mathrm{Stab}*{\mathfrak{C}_1}
+R_{\mathfrak{C}_2\leftarrow \mathfrak{C}_1} = \mathrm{Stab}_{\mathfrak{C}_2}^{-1}\circ \mathrm{Stab}_{\mathfrak{C}_1}
 $$
 라는 $R$-matrix가 생긴다. 이 $R$-matrix는 wall crossing으로 분해되며, chamber를 한 바퀴 도는 관계에서 Coxeter-type relation을 만족한다. 특별히 framing torus가 작용하는 Nakajima variety의 tensor product 상황에서는 dynamical Yang–Baxter equation이 나온다.
 

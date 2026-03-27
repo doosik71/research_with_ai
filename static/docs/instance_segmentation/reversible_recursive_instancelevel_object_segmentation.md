@@ -109,16 +109,16 @@ $$
 
 로 둔다. 이는 bounding box의 중심 좌표와 너비, 높이이다. ground truth box는 $\tilde{\mathbf{l}}$로 표기한다.
 
-$t$번째 iteration에서 refinement network는 class별 bounding box offset $\mathbf{o}*{t,k}$와 class confidence $p_t$를 예측한다. ground truth offset은 현재 proposal 위치 $\mathbf{l}*{t-1}$와 ground truth box $\tilde{\mathbf{l}}$ 사이의 변환으로 계산된다.
+$t$번째 iteration에서 refinement network는 class별 bounding box offset $\mathbf{o}_{t,k}$와 class confidence $p_t$를 예측한다. ground truth offset은 현재 proposal 위치 $\mathbf{l}_{t-1}$와 ground truth box $\tilde{\mathbf{l}}$ 사이의 변환으로 계산된다.
 
 $$
-\tilde{\mathbf{o}}*t = f^l(\mathbf{l}*{t-1}, \tilde{\mathbf{l}})
+\tilde{\mathbf{o}}_t = f^l(\mathbf{l}_{t-1}, \tilde{\mathbf{l}})
 $$
 
 이때 $f^l(\cdot)$는 Fast R-CNN류 box regression에서 쓰는, 중심점 이동과 로그 스케일 width/height shift를 포함하는 변환이다. refined box는 예측 offset을 inverse transform에 넣어 계산한다.
 
 $$
-\mathbf{l}*t = {f^l}^{-1}(\mathbf{l}*{t-1}, \mathbf{o}_{t,g})
+\mathbf{l}_t = {f^l}^{-1}(\mathbf{l}_{t-1}, \mathbf{o}_{t,g})
 $$
 
 여기서 $g$는 ground truth class이다.
@@ -126,7 +126,7 @@ $$
 각 iteration의 multi-task loss는 다음과 같다.
 
 $$
-J_t = J_{\text{cls}}(p_t, g) + \mathbf{1}[g \ge 1] J_{\text{loc}}(\mathbf{o}_{t,g}, \tilde{\mathbf{o}}*t) + \mathbf{1}[g \ge 1] J*{\text{seg}}(\mathbf{v}_t, \tilde{\mathbf{v}}_t)
+J_t = J_{\text{cls}}(p_t, g) + \mathbf{1}[g \ge 1] J_{\text{loc}}(\mathbf{o}_{t,g}, \tilde{\mathbf{o}}_t) + \mathbf{1}[g \ge 1] J_{\text{seg}}(\mathbf{v}_t, \tilde{\mathbf{v}}_t)
 $$
 
 각 항의 의미는 다음과 같다.

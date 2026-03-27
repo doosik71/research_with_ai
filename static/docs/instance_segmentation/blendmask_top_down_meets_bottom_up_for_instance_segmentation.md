@@ -84,7 +84,7 @@ $$
 blender는 논문의 핵심입니다. 그림 설명에 따르면, 각 basis와 attention을 **element-wise product**로 곱한 뒤, 이를 합쳐 최종 mask를 만듭니다. 개념적으로는 다음처럼 이해할 수 있습니다.
 
 $$
-\hat{M}_d = \sum*{k=1}^{K} \left(B_k \otimes A_{d,k}\right)
+\hat{M}_d = \sum_{k=1}^{K} \left(B_k \otimes A_{d,k}\right)
 $$
 
 여기서

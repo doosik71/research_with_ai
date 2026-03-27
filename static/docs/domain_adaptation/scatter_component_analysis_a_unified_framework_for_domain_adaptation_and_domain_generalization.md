@@ -132,7 +132,7 @@ $$
 실제 구현을 위해 하이퍼파라미터 $\beta$와 $\delta$를 넣으면, 최적화 문제는 다음과 같이 정리된다.
 
 $$
-\operatorname*{argmax}_{\mathbf{B}\in\mathbb{R}^{n\times k}}
+\operatorname_{argmax}_{\mathbf{B}\in\mathbb{R}^{n\times k}}
 \frac{
 \operatorname{Tr}\big(\mathbf{B}^{\top}(\frac{1-\beta}{n}\mathbf{K}\mathbf{K}+\beta\mathbf{P})\mathbf{B}\big)
 }{

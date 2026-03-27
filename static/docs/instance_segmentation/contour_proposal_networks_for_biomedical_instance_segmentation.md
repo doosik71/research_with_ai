@@ -184,7 +184,7 @@ $$
 최종 per-pixel loss는 다음과 같다.
 
 $$
-\mathcal{L}_{CPN} = \mathcal{L}*{inst}(o) + o\left(\mathcal{L}*{contour} + \mathcal{L}*{refine} + \lambda \mathcal{L}*{repr}\right)
+\mathcal{L}_{CPN} = \mathcal{L}_{inst}(o) + o\left(\mathcal{L}_{contour} + \mathcal{L}_{refine} + \lambda \mathcal{L}_{repr}\right)
 $$
 
 여기서 $o=1$이면 해당 픽셀이 객체를 대표하는 positive 위치이고, $o=0$이면 background 위치다.

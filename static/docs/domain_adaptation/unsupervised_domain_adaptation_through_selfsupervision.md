@@ -109,7 +109,7 @@ $$
 를 만든다. 그리고 early stopping epoch는
 
 $$
-\operatorname*{argmin}_{t\in{1,\dots,T}} \mathbf{u}_t
+\operatorname_{argmin}_{t\in{1,\dots,T}} \mathbf{u}_t
 $$
 
 로 정한다. 직관적으로는 “source에서의 discrimination은 유지하면서 source-target representation mean distance는 줄어드는 시점”을 선택하는 것이다. 이는 엄밀한 이론 보장보다는 practical rule-of-thumb으로 제시된다.

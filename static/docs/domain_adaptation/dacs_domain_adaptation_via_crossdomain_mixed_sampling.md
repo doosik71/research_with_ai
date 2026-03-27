@@ -26,7 +26,7 @@
 
 ## 3. 상세 방법 설명
 
-전체 파이프라인은 매우 단순한 self-training 계열 구조 위에 cross-domain mixing을 얹은 형태다. 학습 시마다 source dataset $\mathcal{D}_S$에서 이미지-라벨 쌍 $(X_S, Y_S)$를 뽑고, target dataset $\mathcal{D}*T$에서 이미지 $X_T$를 뽑는다. 그런 다음 현재 segmentation network $f*{\theta}$를 이용해 $X_T$의 예측 semantic map $\hat{Y}_T$를 만든다. 이것이 target pseudo-label 역할을 한다.
+전체 파이프라인은 매우 단순한 self-training 계열 구조 위에 cross-domain mixing을 얹은 형태다. 학습 시마다 source dataset $\mathcal{D}_S$에서 이미지-라벨 쌍 $(X_S, Y_S)$를 뽑고, target dataset $\mathcal{D}_T$에서 이미지 $X_T$를 뽑는다. 그런 다음 현재 segmentation network $f_{\theta}$를 이용해 $X_T$의 예측 semantic map $\hat{Y}_T$를 만든다. 이것이 target pseudo-label 역할을 한다.
 
 그다음 DACS의 핵심 단계가 수행된다. source 이미지와 target 이미지를 binary mask를 통해 섞어 mixed image $X_M$를 만든다. 동시에 label도 같은 방식으로 섞어 mixed label $Y_M$를 만든다. 이때 source 쪽은 실제 정답 $Y_S$를 사용하고, target 쪽은 pseudo-label $\hat{Y}_T$를 사용한다. 논문에서 기본 mixing 전략으로 사용하는 것은 ClassMix이다. ClassMix에서는 source 이미지에 포함된 클래스들 중 절반을 선택하고, 그 클래스에 해당하는 픽셀들을 mask로 삼아 target 이미지 위에 붙인다. 즉, 직사각형 패치를 붙이는 CutMix와 달리 semantic class 경계를 따라 영역을 옮긴다.
 

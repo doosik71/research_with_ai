@@ -29,13 +29,13 @@
 먼저 NMT는 source sentence $\mathbf{x}$와 target sentence $\mathbf{y}$를 입력으로 받아, 조건부 확률 $P(\mathbf{y}|\mathbf{x})$를 모델링한다. 일반적인 학습 목표는 Maximum Likelihood Estimation이며, 이는 cross-entropy loss 최소화와 동치다. 논문은 이를 다음과 같이 정리한다.
 
 $$
-\hat{\theta}=\operatorname*{argmax}_{\theta}\log P(\mathbf{y}|\mathbf{x};\theta)
+\hat{\theta}=\operatorname_{argmax}_{\theta}\log P(\mathbf{y}|\mathbf{x};\theta)
 $$
 
 또는 토큰 단위의 cross-entropy 관점에서는
 
 $$
-\hat{\theta}=\operatorname*{argmin}_{\theta}\sum_{j=1}^{|y|}-\log P(y_j|\mathbf{y}_{1:j-1},\mathbf{x};\theta)
+\hat{\theta}=\operatorname_{argmin}_{\theta}\sum_{j=1}^{|y|}-\log P(y_j|\mathbf{y}_{1:j-1},\mathbf{x};\theta)
 $$
 
 가 된다. 즉, 정답 target sequence의 각 토큰이 높은 확률을 갖도록 파라미터 $\theta$를 업데이트한다.
@@ -67,7 +67,7 @@ $$
 학습 절차 쪽에서 가장 핵심은 **regularization**이다. catastrophic forgetting을 줄이기 위해 사전학습 파라미터에서 너무 멀어지지 않게 제약을 거는 방식이다. 논문은 일반적인 regularized loss를 다음과 같이 제시한다.
 
 $$
-\hat{\theta}=\operatorname*{argmin}_{\theta}\left[L_{CE}(\mathbf{x},\mathbf{y};\theta)+\Lambda \sum_j F_j(\theta_j-\theta_j^{PT})^2\right]
+\hat{\theta}=\operatorname_{argmin}_{\theta}\left[L_{CE}(\mathbf{x},\mathbf{y};\theta)+\Lambda \sum_j F_j(\theta_j-\theta_j^{PT})^2\right]
 $$
 
 여기서 $\theta_j^{PT}$는 pre-training 당시의 파라미터이고, $\Lambda$는 이전 domain을 얼마나 보존할지 결정하는 가중치다. $F_j=1$이면 단순 L2 regularization이 되고, $F_j$를 Fisher information으로 두면 **Elastic Weight Consolidation, EWC**가 된다. EWC의 직관은 “이전 domain에서 중요한 파라미터는 덜 바꾸고, 덜 중요한 파라미터를 더 바꾸자”는 것이다. 논문은 EWC가 단일 domain 적응뿐 아니라 연속적인 multi-domain adaptation에서도 forgetting 완화에 효과적이었다고 소개한다.
@@ -79,7 +79,7 @@ $$
 비-MLE 학습으로는 **Minimum Risk Training, MRT**와 **meta-learning**을 다룬다. MRT는 번역 샘플 집합에 대해 BLEU 같은 평가 척도 기반 risk를 최소화하는 방식이다. 논문은 적응 데이터가 작고 noisy할 때 MLE보다 exposure bias를 줄이는 데 도움될 수 있다고 본다. MRT 목표는 대략 다음과 같이 주어진다.
 
 $$
-\hat{\theta}=\operatorname*{argmin}_{\theta}\sum_{s=1}^{S}\sum_{n=1}^{N}\Delta(\mathbf{y}_n^{(s)},\mathbf{y}^{(s)*})
+\hat{\theta}=\operatorname_{argmin}_{\theta}\sum_{s=1}^{S}\sum_{n=1}^{N}\Delta(\mathbf{y}_n^{(s)},\mathbf{y}^{(s)*})
 \frac{P(\mathbf{y}_n^{(s)}|\mathbf{x}^{(s)};\theta)^{\alpha}}
 {\sum_{n'}P(\mathbf{y}_{n'}^{(s)}|\mathbf{x}^{(s)};\theta)^{\alpha}}
 $$

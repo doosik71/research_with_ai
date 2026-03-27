@@ -65,11 +65,11 @@ $$
 $$
 L=\frac{1}{|\mathbb{I}|}\sum_{i\in\mathbb{I}}
 \left(
-1-\frac{1}{|\mathbb{S}^{(i)}|}\sum_{p\in\mathbb{S}^{(i)}} \text{cos}(\vec{\bar{e}}^{(i)},\vec{e}*p)
+1-\frac{1}{|\mathbb{S}^{(i)}|}\sum_{p\in\mathbb{S}^{(i)}} \text{cos}(\vec{\bar{e}}^{(i)},\vec{e}_p)
 \right)
 +
 \left(
-\frac{1}{|\mathbb{N}^{(i)}|}\sum*{p\in\mathbb{N}^{(i)}} \text{cos}(\vec{\bar{e}}^{(i)},\vec{e}_p)^2
+\frac{1}{|\mathbb{N}^{(i)}|}\sum_{p\in\mathbb{N}^{(i)}} \text{cos}(\vec{\bar{e}}^{(i)},\vec{e}_p)^2
 \right)
 $$
 

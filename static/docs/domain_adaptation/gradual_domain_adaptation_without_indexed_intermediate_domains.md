@@ -30,7 +30,7 @@
 
 ### 3.1 문제 설정
 
-논문은 source domain의 라벨된 데이터 $\mathcal{S}$, target domain의 비라벨 데이터 $\mathcal{T}$, 그리고 source와 target 사이 어딘가에서 왔다고 믿는 추가 비라벨 데이터 전체 집합 $\mathcal{U}$ 를 입력으로 둔다. 기존 GDA에서는 $\mathcal{U}*1, \dots, \mathcal{U}*{M-1}$ 로 intermediate domain이 이미 나뉘어 있다고 가정하지만, 이 논문에서는 오직 하나의 큰 비라벨 집합 $\mathcal{U}$ 만 주어진다.
+논문은 source domain의 라벨된 데이터 $\mathcal{S}$, target domain의 비라벨 데이터 $\mathcal{T}$, 그리고 source와 target 사이 어딘가에서 왔다고 믿는 추가 비라벨 데이터 전체 집합 $\mathcal{U}$ 를 입력으로 둔다. 기존 GDA에서는 $\mathcal{U}_1, \dots, \mathcal{U}_{M-1}$ 로 intermediate domain이 이미 나뉘어 있다고 가정하지만, 이 논문에서는 오직 하나의 큰 비라벨 집합 $\mathcal{U}$ 만 주어진다.
 
 GDA의 기본 self-training은 다음처럼 순차적으로 진행된다.
 
@@ -182,7 +182,7 @@ $$
 \theta'_0 = \texttt{ST}(\theta_M, (\mathcal{U}_{M-1},\ldots,\mathcal{U}_0))
 $$
 
-하지만 이것도 여전히 어렵기 때문에, 논문은 greedy하게 **다음 intermediate domain 하나씩** 찾는다. 즉, 현재 모델 $\theta_m$ 과 현재 domain $\mathcal{U}*m$ 이 있을 때, 남은 샘플 집합 $\mathcal{U}*{\setminus m}$ 에서 다음 domain $\mathcal{U}_{m+1}$ 을 고른다.
+하지만 이것도 여전히 어렵기 때문에, 논문은 greedy하게 **다음 intermediate domain 하나씩** 찾는다. 즉, 현재 모델 $\theta_m$ 과 현재 domain $\mathcal{U}_m$ 이 있을 때, 남은 샘플 집합 $\mathcal{U}_{\setminus m}$ 에서 다음 domain $\mathcal{U}_{m+1}$ 을 고른다.
 
 이를 위한 sub-problem은 다음이다.
 

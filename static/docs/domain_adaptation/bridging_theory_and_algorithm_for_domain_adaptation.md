@@ -64,9 +64,9 @@ $$d_{f,\mathcal{F}}^{(\rho)}(P,Q)=\sup_{f'\in\mathcal{F}}\Big(\mathrm{disp}^{(\r
 
 논문이 제시한 핵심 이론 결과는 target error가 다음 세 항으로 제어된다는 것이다.
 
-$$\mathrm{err}_Q(h_f)\le \mathrm{err}^{(\rho)}*P(f)+d^{(\rho)}*{f,\mathcal{F}}(P,Q)+\lambda$$
+$$\mathrm{err}_Q(h_f)\le \mathrm{err}^{(\rho)}_P(f)+d^{(\rho)}_{f,\mathcal{F}}(P,Q)+\lambda$$
 
-여기서 첫 항 $\mathrm{err}^{(\rho)}*P(f)$는 source에서의 empirical margin error다. 둘째 항 $d^{(\rho)}*{f,\mathcal{F}}(P,Q)$는 source와 target의 차이로 인해 발생하는 일반화 간극이다. 셋째 항 $\lambda$는 source와 target을 동시에 잘 설명하는 이상적인 분류기의 combined margin loss 최소값이다. 즉 adaptation 자체가 가능한 문제인지, hypothesis class가 충분히 풍부한지를 반영하는 problem-dependent constant다.
+여기서 첫 항 $\mathrm{err}^{(\rho)}_P(f)$는 source에서의 empirical margin error다. 둘째 항 $d^{(\rho)}_{f,\mathcal{F}}(P,Q)$는 source와 target의 차이로 인해 발생하는 일반화 간극이다. 셋째 항 $\lambda$는 source와 target을 동시에 잘 설명하는 이상적인 분류기의 combined margin loss 최소값이다. 즉 adaptation 자체가 가능한 문제인지, hypothesis class가 충분히 풍부한지를 반영하는 problem-dependent constant다.
 
 이 bound의 의미는 아주 직접적이다. 좋은 adaptation 모델이 되려면 source에서 정확해야 하고, source와 target 사이의 MDD가 작아야 하며, 두 도메인에 동시에 잘 맞는 공통 구조가 존재해야 한다. 논문은 여기에 더해 empirical MDD와 true MDD 사이의 차이를 **Rademacher complexity**로 제어한다. 따라서 최종적으로는 empirical source loss와 empirical MDD를 줄이면 target error를 줄일 수 있다는 학습 원리가 성립한다.
 

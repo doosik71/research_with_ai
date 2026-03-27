@@ -64,7 +64,7 @@ $$
 
 여기서 $D$는 domain 개수이며, 이 논문에서는 source와 target 두 개이므로 사실상 domain 예측이 50:50에 가깝게 되게 만드는 목적이다. 쉽게 말하면, domain classifier가 확신을 가지지 못하도록 representation을 조정하는 것이다.
 
-흥미로운 점은 $\mathcal{L}*D$와 $\mathcal{L}*{\text{conf}}$가 서로 반대 방향을 가진다는 것이다. domain classifier는 구분을 잘하고 싶고, representation은 구분을 어렵게 만들고 싶다. 논문은 이를 한 번에 푸는 대신, 다음 두 단계를 번갈아 업데이트한다.
+흥미로운 점은 $\mathcal{L}_D$와 $\mathcal{L}_{\text{conf}}$가 서로 반대 방향을 가진다는 것이다. domain classifier는 구분을 잘하고 싶고, representation은 구분을 어렵게 만들고 싶다. 논문은 이를 한 번에 푸는 대신, 다음 두 단계를 번갈아 업데이트한다.
 
 첫째, representation을 고정하고 domain classifier 파라미터 $\theta_D$를 업데이트해서 $\mathcal{L}_D$를 최소화한다.
 

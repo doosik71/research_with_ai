@@ -27,7 +27,7 @@
 먼저 inter-domain adaptation을 보자. source 이미지 $X_s$와 정답 segmentation map $Y_s$가 주어졌을 때, generator $G_{inter}$는 soft segmentation map $P_s = G_{inter}(X_s)$를 출력한다. 각 픽셀 $(h,w)$에서 $P_s^{(h,w,c)}$는 클래스 $c$에 대한 확률이다. source에 대해서는 일반적인 pixel-wise cross-entropy loss를 쓴다.
 
 $$
-\mathcal{L}*{inter}^{seg}(X_s, Y_s) = - \sum*{h,w} \sum_c Y_s^{(h,w,c)} \log P_s^{(h,w,c)}
+\mathcal{L}_{inter}^{seg}(X_s, Y_s) = - \sum_{h,w} \sum_c Y_s^{(h,w,c)} \log P_s^{(h,w,c)}
 $$
 
 이 식은 source label supervision 자체를 담당한다. 즉, segmentation 모델이 최소한 source domain에서는 제대로 semantic class를 예측하도록 만든다.
@@ -41,7 +41,7 @@ $$
 entropy가 낮다는 것은 한 클래스 확률이 높고 나머지는 낮아 prediction이 confident하다는 뜻이고, entropy가 높다는 것은 여러 클래스에 확률이 분산되어 prediction uncertainty가 높다는 뜻이다. 저자들은 AdvEnt 계열 접근을 따라, 이 entropy map을 discriminator $D_{inter}$에 넣어 source와 target을 구분하게 하고, generator는 target entropy map이 source처럼 보이도록 학습한다. 논문에 제시된 adversarial loss는 다음과 같다.
 
 $$
-\mathcal{L}*{inter}^{adv}(X_s, X_t) = \sum*{h,w} \log\bigl(1 - D_{inter}(I_t^{(h,w)})\bigr) + \log\bigl(D_{inter}(I_s^{(h,w)})\bigr)
+\mathcal{L}_{inter}^{adv}(X_s, X_t) = \sum_{h,w} \log\bigl(1 - D_{inter}(I_t^{(h,w)})\bigr) + \log\bigl(D_{inter}(I_s^{(h,w)})\bigr)
 $$
 
 여기서 $I_s$는 source image의 entropy map이다. 의미적으로는, discriminator는 source entropy map과 target entropy map을 구분하려 하고, generator는 target 쪽 entropy 구조를 source와 비슷하게 만들어 inter-domain gap을 줄이려 한다.
@@ -54,10 +54,10 @@ $$
 
 즉, 이미지 전체 평균 entropy가 낮을수록 easy, 높을수록 hard라고 본다. 이때 절대 임곗값을 쓰지 않고, 전체 target 중 easy split에 들어갈 비율을 나타내는 hyperparameter $\lambda$를 사용한다. 정의는 $\lambda = \frac{|X_{te}|}{|X_t|}$이며, $|X_{te}|$는 easy split의 이미지 수, $|X_t|$는 전체 target image 수다. 이 설계는 특정 entropy threshold가 데이터셋마다 달라지는 문제를 피하기 위한 것이다.
 
-이후 intra-domain adaptation 단계에서는 easy split 이미지 $X_{te}$에 대해 $G_{inter}$가 낸 segmentation prediction $P_{te}$를 one-hot pseudo label $\mathcal{P}*{te}$로 바꿔 사용한다. 그리고 $G*{intra}$는 easy split에 대해 다음 segmentation loss를 최소화한다.
+이후 intra-domain adaptation 단계에서는 easy split 이미지 $X_{te}$에 대해 $G_{inter}$가 낸 segmentation prediction $P_{te}$를 one-hot pseudo label $\mathcal{P}_{te}$로 바꿔 사용한다. 그리고 $G_{intra}$는 easy split에 대해 다음 segmentation loss를 최소화한다.
 
 $$
-\mathcal{L}*{intra}^{seg}(X*{te}) = - \sum_{h,w} \sum_c \mathcal{P}*{te}^{(h,w,c)} \log\left(G*{intra}(X_{te})^{(h,w,c)}\right)
+\mathcal{L}_{intra}^{seg}(X_{te}) = - \sum_{h,w} \sum_c \mathcal{P}_{te}^{(h,w,c)} \log\left(G_{intra}(X_{te})^{(h,w,c)}\right)
 $$
 
 이 식은 self-training의 역할을 한다. 다만 모든 target을 pseudo label로 쓰는 것이 아니라, 상대적으로 믿을 수 있는 easy split만 사용한다는 점이 중요하다. 이는 noisy pseudo label로 인한 학습 붕괴를 줄이려는 의도다.
@@ -65,7 +65,7 @@ $$
 동시에 easy split과 hard split 사이의 intra-domain gap도 adversarial하게 줄인다. easy image와 hard image의 entropy map을 각각 $I_{te}$, $I_{th}$라고 하면, discriminator $D_{intra}$는 둘을 구분하고, generator $G_{intra}$는 hard split의 entropy map도 easy split과 비슷하게 보이도록 만든다. 논문 식은 다음과 같다.
 
 $$
-\mathcal{L}*{intra}^{adv}(X*{te}, X_{th}) = \sum_{h,w} \log\bigl(1 - D_{intra}(I_{th}^{(h,w)})\bigr) + \log\bigl(D_{intra}(I_{te}^{(h,w)})\bigr)
+\mathcal{L}_{intra}^{adv}(X_{te}, X_{th}) = \sum_{h,w} \log\bigl(1 - D_{intra}(I_{th}^{(h,w)})\bigr) + \log\bigl(D_{intra}(I_{te}^{(h,w)})\bigr)
 $$
 
 쉽게 말해, easy split은 pseudo label supervision으로 semantic signal을 제공하고, hard split은 adversarial alignment를 통해 easy split의 prediction 특성 쪽으로 끌려간다. 결과적으로 hard image에서도 더 confident하고 구조적인 segmentation map을 얻는 것이 목적이다.
@@ -73,7 +73,7 @@ $$
 전체 손실은 다음과 같이 네 항의 합으로 구성된다.
 
 $$
-\mathcal{L} = \mathcal{L}*{inter}^{seg} + \mathcal{L}*{inter}^{adv} + \mathcal{L}*{intra}^{seg} + \mathcal{L}*{intra}^{adv}
+\mathcal{L} = \mathcal{L}_{inter}^{seg} + \mathcal{L}_{inter}^{adv} + \mathcal{L}_{intra}^{seg} + \mathcal{L}_{intra}^{adv}
 $$
 
 하지만 저자들은 이 전체 목적함수를 한 번에 end-to-end로 최적화하지 않는다. 대신 3-stage training을 쓴다. 첫째, $G_{inter}$와 $D_{inter}$를 이용해 inter-domain adaptation을 수행한다. 둘째, 학습된 $G_{inter}$로 target pseudo label과 entropy ranking을 생성한다. 셋째, $G_{intra}$와 $D_{intra}$를 이용해 intra-domain adaptation을 수행한다. 논문 설명상 이것은 two-step self-supervised adaptation을 안정적으로 구현하기 위한 선택이다.

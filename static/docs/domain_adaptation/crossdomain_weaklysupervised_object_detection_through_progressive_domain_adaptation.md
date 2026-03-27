@@ -45,7 +45,7 @@
 이를 식으로 쓰면 개념적으로 다음과 같이 볼 수 있다.
 
 $$
-\mathbf{G} = \left \{(\mathbf{b}_c, c) \mid c \in \mathbf{z},; (\hat p_c, \mathbf{b}_c, c) = \operatorname*{\arg\max}_{(p,\mathbf{b},c)\in \mathbf{D}} \; p \right \}
+\mathbf{G} = \left \{(\mathbf{b}_c, c) \mid c \in \mathbf{z},; (\hat p_c, \mathbf{b}_c, c) = \operatorname_{\arg\max}_{(p,\mathbf{b},c)\in \mathbf{D}} \; p \right \}
 $$
 
 이 수식은 논문의 설명을 정리한 표현이며, 원문도 사실상 같은 절차를 서술한다. 중요한 점은 클래스당 하나의 박스만 사용한다는 것이다. 이 설계는 매우 단순하지만, target image-level label을 활용해 명백한 class confusion을 줄이는 데 효과적이다. 동시에 한계도 있다. 이미지 안에 같은 클래스의 객체가 여러 개 있으면 나머지는 label이 없는 배경처럼 취급될 수 있다. 저자들도 이 점을 discussion에서 명시적으로 한계로 언급한다.

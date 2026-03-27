@@ -59,7 +59,7 @@ $$\Delta = \frac{1}{T} \sum_{t=1}^{T} W_p(\mu_{t-1}, \mu_t)$$
 
 각 도메인 $t \in \{1, \ldots, T\}$에 대해, 이전 분류기 $h_{t-1}$이 생성한 의사 레이블(pseudo-label)로 새로운 분류기 $h_t$를 학습한다.
 
-$$h_t = \mathrm{ST}(h_{t-1}, S_t) = \operatorname*{arg\,min}_{f \in \mathcal{H}} \sum_{x \in S_t} \ell(f(x), h_{t-1}(x))$$
+$$h_t = \mathrm{ST}(h_{t-1}, S_t) = \operatorname_{arg\,min}_{f \in \mathcal{H}} \sum_{x \in S_t} \ell(f(x), h_{t-1}(x))$$
 
 여기서 $S_t$는 도메인 $t$에서 추출된 $n$개의 비레이블 데이터 집합이다. 초기 분류기 $h_0$는 소스 도메인의 레이블된 데이터로 학습된다.
 

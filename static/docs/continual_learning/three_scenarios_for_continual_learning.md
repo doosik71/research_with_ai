@@ -79,7 +79,7 @@ F_{ii}^{(k)}
 \right)
 $$
 
-여기서 $\hat{\theta}_i^{(k)}$는 task $k$ 학습 직후의 파라미터 값이고, $F*{ii}^{(k)}$는 task $k$에 대한 Fisher Information의 대각 성분이다. 즉, 중요한 파라미터일수록 과거 값에서 멀어질 때 더 큰 페널티를 받는다.
+여기서 $\hat{\theta}_i^{(k)}$는 task $k$ 학습 직후의 파라미터 값이고, $F_{ii}^{(k)}$는 task $k$에 대한 Fisher Information의 대각 성분이다. 즉, 중요한 파라미터일수록 과거 값에서 멀어질 때 더 큰 페널티를 받는다.
 
 ##### Online EWC
 
@@ -178,7 +178,7 @@ iCaRL의 학습용 sigmoid 출력은 class별 binary probability를 낸다.
 
 $$
 p_{\boldsymbol{\theta}}^{c}(\boldsymbol{x}) =
-\frac{1}{1+e^{-\boldsymbol{w}_c^T \psi*{\boldsymbol{\phi}}(\boldsymbol{x})}}
+\frac{1}{1+e^{-\boldsymbol{w}_c^T \psi_{\boldsymbol{\phi}}(\boldsymbol{x})}}
 $$
 
 이전 class에는 이전 모델의 출력 확률을 soft target으로, 현재 class에는 hard target을 사용하여 다음 loss를 최적화한다.
@@ -196,7 +196,7 @@ $$
 
 $$
 y^\* =
-\operatorname*{argmin}_{c=1,\ldots,N*{\text{classes so far}}}
+\operatorname_{argmin}_{c=1,\ldots,N_{\text{classes so far}}}
 \left|
 \psi_{\boldsymbol{\phi}}(\boldsymbol{x})-\boldsymbol{\mu}_c
 \right|

@@ -81,10 +81,10 @@ $$
 여기서 $P(V_{pq})$는 상위 위치의 방문 확률이고, $P(U_{ij}\mid V_{pq})$는 상위 위치에서 하위 위치로 갈 전이 확률이다. 이 전이 확률은 다음과 같이 정의된다.
 
 $$
-P(U_{ij}\mid V_{pq}) = Z_{pq} \times \hat{U}*{ij} W^+*{(i-p)(j-q)}
+P(U_{ij}\mid V_{pq}) = Z_{pq} \times \hat{U}_{ij} W^+_{(i-p)(j-q)}
 $$
 
-여기서 $\hat{U}*{ij}$는 forward pass에서의 bottom-up activation이고, $W^+ = \mathrm{ReLU}(W)$는 음수 weight를 제거한 positive connection만 남긴 것이다. $Z*{pq}$는 확률의 합이 1이 되도록 하는 normalization factor이다.
+여기서 $\hat{U}_{ij}$는 forward pass에서의 bottom-up activation이고, $W^+ = \mathrm{ReLU}(W)$는 음수 weight를 제거한 positive connection만 남긴 것이다. $Z_{pq}$는 확률의 합이 1이 되도록 하는 normalization factor이다.
 
 이 식을 쉽게 해석하면 다음과 같다. 어떤 상위 뉴런의 활성은, 아래쪽의 입력 활성과 양의 가중치 연결을 통해 형성된다. 따라서 relevance를 아래로 보낼 때도, **실제로 상위 활성 형성에 기여했을 법한 하위 위치들**로만 relevance를 나누어 준다. 이 과정을 여러 층에 걸쳐 반복하면, 특정 peak 하나를 설명하는 이미지 공간상의 세밀한 관련 영역이 나온다. 이것이 PRM이다.
 

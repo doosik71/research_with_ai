@@ -26,10 +26,10 @@
 
 ### 3.1 문제 정식화
 
-관측된 그룹 집합을 $\mathcal{G} = {\mathbf{G}*m}*{m=1}^{M}$ 라고 하자. 각 그룹 $\mathbf{G}_m$은 $N_m$개의 관측값을 가지며,
+관측된 그룹 집합을 $\mathcal{G} = {\mathbf{G}_m}_{m=1}^{M}$ 라고 하자. 각 그룹 $\mathbf{G}_m$은 $N_m$개의 관측값을 가지며,
 
 $$
-\mathbf{G}*m = (x*{ij}) \in \mathbb{R}^{N_m \times V}
+\mathbf{G}_m = (x_{ij}) \in \mathbb{R}^{N_m \times V}
 $$
 
 로 표현된다. 여기서 $V$는 각 관측값의 feature 차원이다. 전체 관측 수는 $N = \sum_{m=1}^{M} N_m$ 이다.
@@ -37,7 +37,7 @@ $$
 GAD에서는 각 그룹의 성질을 요약하는 **characterization function** $f : \mathbb{R}^{N_m \times V} \rightarrow \mathbb{R}^{D}$ 를 먼저 적용한다. 그다음 모든 그룹의 정보를 합쳐 하나의 기준 그룹 표현을 만드는 **aggregation function** $g : \mathbb{R}^{M \times D} \rightarrow \mathbb{R}^{D}$ 를 적용한다. 그러면 group reference는
 
 $$
-\mathcal{G}^{(\mathrm{ref})} = g\left[{f(\mathbf{G}*m)}*{m=1}^{M}\right]
+\mathcal{G}^{(\mathrm{ref})} = g\left[{f(\mathbf{G}_m)}_{m=1}^{M}\right]
 $$
 
 로 정의된다.

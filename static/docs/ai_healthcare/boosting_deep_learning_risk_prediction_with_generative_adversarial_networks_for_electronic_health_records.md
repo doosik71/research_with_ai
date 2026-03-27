@@ -57,9 +57,9 @@ $$
 
 $$
 \min_G \max_D
-\mathbb{E}_{\mathbf{x}\sim p*{data}(\mathbf{x})}[\log D(\mathbf{x})]
+\mathbb{E}_{\mathbf{x}\sim p_{data}(\mathbf{x})}[\log D(\mathbf{x})]
 +
-\mathbb{E}_{\mathbf{z}\sim p*{\mathbf{z}}(\mathbf{z})}
+\mathbb{E}_{\mathbf{z}\sim p_{\mathbf{z}}(\mathbf{z})}
 [\log(1-D(G(\mathbf{z})))]
 $$
 
@@ -80,7 +80,7 @@ $$
 논문이 제시하는 generator objective의 핵심은 adversarial loss와 reconstruction-like regularization을 함께 쓰는 것이다. 스니펫에 따르면 생성기는 대략 다음 형태의 목적을 최소화한다.
 
 $$
-\mathbb{E}_{\mathbf{x}\sim p*{data}(\mathbf{x})}
+\mathbb{E}_{\mathbf{x}\sim p_{data}(\mathbf{x})}
 \left[
 \rho \cdot
 \mathbb{E}_{\tilde{\mathbf{x}}\sim p_g(\tilde{\mathbf{x}}|\mathbf{x})}

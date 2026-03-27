@@ -74,12 +74,12 @@ $$
 Dist(Z,\hat{Z}) = 1 - \frac{1}{K}\sum_{k'=0}^{K'} L(\hat{R}_{k'}, Z)
 $$
 
-여기서 $L(\hat{R}*{k'}, Z)$는 예측 영역 $\hat{R}*{k'}$가 정답 영역 중 하나와 IoU 유사 형태의 overlap 비율이 threshold 이상이면 1, 아니면 0이다.
+여기서 $L(\hat{R}_{k'}, Z)$는 예측 영역 $\hat{R}_{k'}$가 정답 영역 중 하나와 IoU 유사 형태의 overlap 비율이 threshold 이상이면 1, 아니면 0이다.
 
 $$
-L(\hat{R}*{k'}, Z)=
+L(\hat{R}_{k'}, Z)=
 \begin{cases}
-1, & \exists k \neq 0,\ \frac{\hat{R}*{k'} \cap R_k}{\hat{R}_{k'} \cup R_k} \geq thre \
+1, & \exists k \neq 0,\ \frac{\hat{R}_{k'} \cap R_k}{\hat{R}_{k'} \cup R_k} \geq thre \
 0, & \text{otherwise}
 \end{cases}
 $$

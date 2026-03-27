@@ -123,7 +123,7 @@ $$
 핵심은 pseudo-label 생성 방식이다. target 샘플 $x$의 pseudo-label $y'$는 1단계 모델 $F_T^1$과 2단계 현재 모델 $F_T^2$의 예측을 혼합해 만든다.
 
 $$
-y'=\operatorname*{\arg\max}_{c\in C}\left\{(1-\lambda)F_T^1(x)[c]+\lambda F_T^2(x)[c]\right\}
+y'=\operatorname_{\arg\max}_{c\in C}\left\{(1-\lambda)F_T^1(x)[c]+\lambda F_T^2(x)[c]\right\}
 $$
 
 훈련 초반에는 $\lambda$가 작아서 $F_T^1$의 예측을 많이 믿고, 훈련이 진행될수록 $\lambda$가 커져 $F_T^2$의 예측을 더 많이 반영한다. 논문은 $\lambda$를

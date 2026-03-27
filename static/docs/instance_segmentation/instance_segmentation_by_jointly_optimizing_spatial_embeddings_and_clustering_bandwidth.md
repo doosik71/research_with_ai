@@ -86,7 +86,7 @@ $$
 seed map은 추론 속도와 안정성을 위해 매우 중요하다. 픽셀마다 seediness score를 예측하는데, 이 값은 해당 embedding이 인스턴스 중심에 얼마나 가까운지를 나타낸다. foreground 픽셀은 자신의 Gaussian 출력값에 가깝게, background는 0에 가깝게 회귀시키며, 손실은 다음과 같이 표현된다.
 
 $$
-\mathcal{L}_{seed} = \frac{1}{N}\sum_i \mathbf{1}*{{s_i \in S_k}} |s_i - \phi_k(e_i)|^2 + \mathbf{1}*{{s_i \in bg}} |s_i - 0|^2
+\mathcal{L}_{seed} = \frac{1}{N}\sum_i \mathbf{1}_{{s_i \in S_k}} |s_i - \phi_k(e_i)|^2 + \mathbf{1}_{{s_i \in bg}} |s_i - 0|^2
 $$
 
 추론 시에는 각 클래스별 seed map에서 가장 높은 값을 가진 픽셀을 골라 그 위치의 embedding을 중심 $\hat{C}_k$, 그 위치의 sigma를 $\hat{\sigma}_k$로 사용한다. 그리고
