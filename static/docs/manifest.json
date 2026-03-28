@@ -56,5 +56,12 @@
       "mask r-cnn",
       "panoptic segmentation"
     ]
+  },
+  {
+    "id": "meta-learning",
+    "title": "Meta Learning",
+    "keyword": [
+      "meta learning"
+    ]
   }
 ]
